@@ -15,7 +15,7 @@ const tw = createTw({
 
 function Chapter({ chapter }: { chapter: any }) {
   return (
-    <View style={tw("w-100 flex justify-center items-center py-4")}>
+    <View style={tw("w-full flex justify-center items-center py-4")}>
       {chapter.chapter_image && (
         <Image
           src={chapter.chapter_image}
@@ -26,11 +26,11 @@ function Chapter({ chapter }: { chapter: any }) {
           }}
         />
       )}
-      <Text style={tw("text-2xl fontbold text-primary flex justify-between")}>
+      <Text style={tw("text-2xl font-bold text-primary flex justify-between")}>
         {chapter.chapter_title ?? ""}
       </Text>
       <Text
-        style={tw("text-lg p-10 mt-3 rounded-lg bg-slate-100 line-clamp-[10]")}
+        style={tw("text-lg p-10 mt-3 rounded-lg bg-slate-100")}
       >
         {chapter.chapter_text ?? ""}
       </Text>
@@ -63,7 +63,7 @@ export default function StoryPDF({ story }: { story: any }) {
             {title}
           </Text>
         </View>
-        <View style={tw("w-100 flex justify-center items-center")}>
+        <View style={tw("w-full flex justify-center items-center")}>
           <Image src={story?.coverImage} style={{ width: 500, height: 500 }} />
         </View>
       </Page>
