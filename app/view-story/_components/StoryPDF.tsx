@@ -1,3 +1,4 @@
+import { getTitle } from "@/app/_utils/storyUtils";
 import { Page, Image, Text, View, Document } from "@react-pdf/renderer";
 import { useMemo } from "react";
 import { createTw } from "react-pdf-tailwind";
@@ -13,7 +14,7 @@ const tw = createTw({
 });
 
 export default function StoryPDF({ story }: { story: any }) {
-  const title = story?.output?.story_cover?.title;
+  const title = getTitle(story?.output);
 
   const chapters = useMemo(() => {
     return story?.output?.chapters ? story.output.chapters : [];

@@ -9,24 +9,22 @@ import StoryPages from '../_components/StoryPages'
 import LastPage from '../_components/LastPage'
 import { IoIosArrowDroprightCircle, IoIosArrowDropleftCircle } from "react-icons/io";
 import { Image } from '@nextui-org/react'
+import { getTitle } from '@/app/_utils/storyUtils'
 
 function ViewStory({ params }) {
   const [story, setStory] = useState();
   const bookRef = useRef();
   const [count, setCount] = useState(0);
 
-  const title = story?.output?.story_cover?.title
+  const title = getTitle(story?.output)
 
   useEffect(() => {
-    console.log(params.id)
     getStory();
   }, [])
 
   const getStory = async () => {
     const result = await db.select().from(StoryData)
       .where(eq(StoryData.storyId, params.id));
-
-    console.log(result[0]);
     setStory(result[0]);
   }
 
