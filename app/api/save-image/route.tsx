@@ -8,7 +8,7 @@ export async function  POST(req:NextRequest) {
     const {url}=data;
 
     const base64Image="data:image/png;base64,"+await convertImage(url)
-    console.log(base64Image)
+
     const fileName='/ai-story/'+Date.now()+".png"
     const imageRef=ref(storage,fileName);
 
@@ -17,7 +17,6 @@ export async function  POST(req:NextRequest) {
     });
 
     const downloaderUrl=await getDownloadURL(imageRef);
-    console.log(downloaderUrl);
 
     return NextResponse.json({imageUrl:downloaderUrl})
 

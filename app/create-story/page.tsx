@@ -27,7 +27,7 @@ export interface fieldData{
 }
 export interface formDataType{
   storySubject:string,
-  storyImage:File,
+  storyImage:File | string,
   storyType:string,
   imageStyle:string,
   ageGroup:string
@@ -100,9 +100,16 @@ function CreateStory() {
        
          //Generate Image
 
-        const image = formData?.storyImage
-          ? await toBase64(formData?.storyImage)
-          : null;
+        let image = null;
+
+        if (formData?.storyImage && typeof formData.storyImage === "string") {
+          image = formData.storyImage;
+        }
+
+        if (formData?.storyImage && typeof formData.storyImage === "object") {
+          image = await toBase64(formData?.storyImage) as string;
+        }
+
         const prompt = image
           ? `${formData?.storySubject ?? ''}, ${formData?.imageStyle}`
           : 'Add text with  title:'+story?.story_cover?.title+

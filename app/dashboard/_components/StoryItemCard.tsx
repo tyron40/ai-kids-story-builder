@@ -3,6 +3,7 @@ import {Card, CardHeader, CardBody, CardFooter} from "@nextui-org/card";
 import Image from 'next/image';
 import { Button } from '@nextui-org/button';
 import Link from 'next/link';
+import { getTitle } from '@/app/_utils/storyUtils';
 
 type StoryItemType={
    story:{ id:number,
@@ -18,7 +19,6 @@ type StoryItemType={
     storySubject:string}
 }
 function StoryItemCard({story}:StoryItemType) {
-
   return (
     <Link href={'/view-story/'+story?.storyId}>
         <Card isFooterBlurred className="w-full h-[300px] col-span-12 sm:col-span-5
@@ -34,7 +34,7 @@ function StoryItemCard({story}:StoryItemType) {
       <CardFooter className="absolute bg-white/30 bottom-0 border-t-1 border-zinc-100/50 z-10 justify-between">
         <div>
           <p className="text-black text-xl">
-            {story?.output?.story_cover?.title}
+            {getTitle(story?.output)}
           </p>
         </div>
         <Button className="text-tiny" color="primary" radius="full" size="sm">

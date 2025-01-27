@@ -9,25 +9,25 @@ import StoryPages from '../_components/StoryPages'
 import LastPage from '../_components/LastPage'
 import { IoIosArrowDroprightCircle, IoIosArrowDropleftCircle } from "react-icons/io";
 import { Image } from '@nextui-org/react'
+import { getTitle } from '@/app/_utils/storyUtils'
 
 function ViewStory({ params }) {
   const [story, setStory] = useState();
   const bookRef = useRef();
   const [count, setCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  const title = story?.output?.story_cover?.title
+  const title = getTitle(story?.output)
 
   useEffect(() => {
-    console.log(params.id)
     getStory();
   }, [])
 
   const getStory = async () => {
     const result = await db.select().from(StoryData)
       .where(eq(StoryData.storyId, params.id));
-
-    console.log(result[0]);
     setStory(result[0]);
+    setTotalPages(result[0].output?.chapters?.length + 2)
   }
 
   const storyPages = useMemo(() => {
@@ -48,7 +48,11 @@ function ViewStory({ params }) {
         ) : null;
 
         const content = <div key={index + 1} className='bg-white p-10 border'>
-          <StoryPages storyChapter={story?.output.chapters[index]} />
+          <StoryPages
+            storyId={story?.id}
+            chapter={story?.output.chapters[index]}
+            chapterNumber={index}
+          />
         </div>
 
         return image ? [image, content] : content
@@ -76,31 +80,48 @@ function ViewStory({ params }) {
     return []
   }, [story, storyPages])
 
+  const onFlip = () => {
+    if (!bookRef.current) {
+      return
+    }
+
+    const currentIndex = bookRef.current.pageFlip().getCurrentPageIndex()
+    const totalPages = bookRef.current.pageFlip().getPageCount()
+
+    setTotalPages(totalPages)
+    setCount(currentIndex)
+  }
+
   return (
-    <div className='p-10 md:px-20 lg:px-40 flex justify-center  flex-col '>
+    <div className='p-10 md:px-20 lg:px-40 flex flex-col min-h-screen'>
       <h2 className='font-bold text-4xl text-center p-10 bg-primary text-white'>{title}</h2>
-      <div className='relative'>
+      <div className='relative flex justify-center h-[500px] mt-10'>
         {/* @ts-ignore */}
-        <HTMLFlipBook width={500} height={500}
+        <HTMLFlipBook
+          size="stretch"
+          width={500}
+          minWidth={500}
+          maxWidth={500}
+          height={500}
+          minHeight={500}
+          maxHeight={500}
           showCover={true}
-          className='mt-10'
           useMouseEvents={false}
           ref={bookRef}
+          onFlip={onFlip}
         >
           {bookPages}
         </HTMLFlipBook>
-        {count != 0 && <button className='absolute -left-5 top-[250px]'
+        {count !== 0 && <button className='absolute left-0 top-[250px]'
           onClick={() => {
             bookRef.current.pageFlip().flipPrev();
-            setCount(count - 1)
           }}
         >
           <IoIosArrowDropleftCircle className='text-[40px] text-primary cursor-pointer' />
         </button>}
 
-        {count != (bookPages.length - 1) && <button className='absolute right-0 top-[250px]' onClick={() => {
+        {count < totalPages - 1 && <button className='absolute right-0 top-[250px]' onClick={() => {
           bookRef.current.pageFlip().flipNext();
-          setCount(count + 1)
         }}>
           <IoIosArrowDroprightCircle className='text-[40px] text-primary cursor-pointer' />
         </button>}

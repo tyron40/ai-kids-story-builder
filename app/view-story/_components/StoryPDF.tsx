@@ -1,3 +1,4 @@
+import { getTitle } from "@/app/_utils/storyUtils";
 import { Page, Image, Text, View, Document } from "@react-pdf/renderer";
 import { useMemo } from "react";
 import { createTw } from "react-pdf-tailwind";
@@ -12,16 +13,47 @@ const tw = createTw({
   },
 });
 
+function Chapter({ chapter }: { chapter: any }) {
+  return (
+    <View style={tw("w-full flex justify-center items-center py-4")}>
+      {chapter.chapter_image && (
+        <Image
+          src={chapter.chapter_image}
+          style={{
+            width: 300,
+            height: 300,
+            marginBottom: 24,
+          }}
+        />
+      )}
+      <Text style={tw("text-2xl font-bold text-primary flex justify-between")}>
+        {chapter.chapter_title ?? ""}
+      </Text>
+      <Text
+        style={tw("text-lg p-10 mt-3 rounded-lg bg-slate-100")}
+      >
+        {chapter.chapter_text ?? ""}
+      </Text>
+    </View>
+  );
+}
+
 export default function StoryPDF({ story }: { story: any }) {
-  const title = story?.output?.story_cover?.title;
+  const title = getTitle(story?.output);
 
   const chapters = useMemo(() => {
-    return story?.output?.chapters ? story.output.chapters : [];
+    if (!story?.output?.chapters) {
+      return null;
+    }
+
+    return story.output.chapters.map((chapter: any, index: number) => {
+      return <Chapter key={index} chapter={chapter} />;
+    });
   }, [story]);
 
   return (
     <Document>
-      <Page size="A4">
+      <Page>
         <View>
           <Text
             style={tw(
@@ -31,30 +63,15 @@ export default function StoryPDF({ story }: { story: any }) {
             {title}
           </Text>
         </View>
-        <View style={tw("w-100 flex justify-center items-center")}>
+        <View style={tw("w-full flex justify-center items-center")}>
           <Image src={story?.coverImage} style={{ width: 500, height: 500 }} />
         </View>
-        <View style={tw("p-10")}>
-          {chapters.map((chapter: any, index: number) => (
-            <View key={index} style={tw("py-3")}>
-              <Text
-                style={tw(
-                  "text-2xl fontbold text-primary flex justify-between"
-                )}
-              >
-                {chapter.chapter_title ?? ""}
-              </Text>
-              <Text
-                style={tw(
-                  "text-lg p-10 mt-3 rounded-lg bg-slate-100 line-clamp-[10]"
-                )}
-              >
-                {chapter.chapter_text ?? ""}
-              </Text>
-            </View>
-          ))}
-        </View>
       </Page>
+      {chapters.map((chapter: any, index: number) => (
+        <Page key={index} style={tw("p-10")}>
+          {chapter}
+        </Page>
+      ))}
     </Document>
   );
 }
