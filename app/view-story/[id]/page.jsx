@@ -48,7 +48,11 @@ function ViewStory({ params }) {
         ) : null;
 
         const content = <div key={index + 1} className='bg-white p-10 border'>
-          <StoryPages storyChapter={story?.output.chapters[index]} />
+          <StoryPages
+            storyId={story?.id}
+            chapter={story?.output.chapters[index]}
+            chapterNumber={index}
+          />
         </div>
 
         return image ? [image, content] : content
