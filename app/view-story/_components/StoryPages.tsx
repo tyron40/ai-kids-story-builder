@@ -49,7 +49,7 @@ const StoryPages = React.forwardRef((props: any, ref: any) => {
         </button>
       </h2>
       {audioUrl && (
-        <audio controls autoPlay ref={audioRef}>
+        <audio controls autoPlay ref={audioRef} src={audioUrl}>
           <source src={audioUrl} type="audio/wav" />
           Your browser does not support the audio element.
         </audio>
