@@ -19,6 +19,8 @@ import { UserDetailContext } from '../_context/UserDetailConext'
 import { eq } from 'drizzle-orm'
 import TotalChaptersSelect from './_components/TotalChaptersSelect'
 import ImageInput from './_components/ImageInput'
+import { toBase64 } from '../_utils/imageUtils'
+import { generateImage, saveImage } from '../_utils/api'
 
 const CREATE_STORY_PROMPT=process.env.NEXT_PUBLIC_CREATE_STORY_PROMPT
 export interface fieldData{
@@ -33,14 +35,6 @@ export interface formDataType{
   ageGroup:string
   totalChapters:number
 }
-
-const toBase64 = (file: File) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-  });
 
 function CreateStory() {
 
@@ -62,15 +56,6 @@ function CreateStory() {
       [data.fieldName]:data.fieldValue
     }));
     console.log(formData)
-  }
-
-  const generateImage = async (prompt: string, image?: string) => {
-    const imageResp = await axios.post('/api/generate-image', {
-      image,
-      prompt 
-    })
-
-    return imageResp?.data?.imageUrl
   }
 
   const GenerateStory=async()=>{
@@ -115,21 +100,16 @@ function CreateStory() {
           : 'Add text with  title:'+story?.story_cover?.title+
                 " in bold text for book cover, "+story?.story_cover?.image_prompt;
 
-        const AiImageUrl= await generateImage(prompt, image as string)
-        
-        const imageResult=await axios.post('/api/save-image',{
-          url:AiImageUrl
-        });
+        const coverImageUrl = await generateImage(prompt, image as string)
+        const imageResult = await saveImage(coverImageUrl)
 
-        const FirebaseStorageImageUrl=imageResult.data.imageUrl;
+        const FirebaseStorageImageUrl = imageResult.data.imageUrl;
 
         for (let index = 0; index < story.chapters.length; index++) {
           const chapter = story.chapters[index]
           if (chapter.image_prompt) {
             const imageUrl = await generateImage(chapter.image_prompt, image as string)
-            const imageResult = await axios.post('/api/save-image',{
-              url: imageUrl
-            });
+            const imageResult = await saveImage(imageUrl)
             story.chapters[index].chapter_image = imageResult.data.imageUrl
           }
         }
