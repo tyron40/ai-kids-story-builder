@@ -1,69 +1,113 @@
-"use client"
-import { db } from '@/config/db'
-import { StoryData } from '@/config/schema'
-import { eq } from 'drizzle-orm'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import HTMLFlipBook from 'react-pageflip';
-import BookCoverPage from '../_components/BookCoverPage'
-import StoryPages from '../_components/StoryPages'
-import LastPage from '../_components/LastPage'
-import { IoIosArrowDroprightCircle, IoIosArrowDropleftCircle } from "react-icons/io";
-import { Image } from '@nextui-org/react'
-import { getTitle } from '@/app/_utils/storyUtils'
+"use client";
+import { generateImage, saveImage } from "@/app/_utils/api";
+import { getTitle } from "@/app/_utils/storyUtils";
+import { db } from "@/config/db";
+import { StoryData } from "@/config/schema";
+import { Image } from "@nextui-org/react";
+import { eq } from "drizzle-orm";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  IoIosArrowDroprightCircle,
+  IoIosArrowDropleftCircle,
+} from "react-icons/io";
+import HTMLFlipBook from "react-pageflip";
+
+import BookCoverPage from "../_components/BookCoverPage";
+import StoryPages from "../_components/StoryPages";
+import LastPage from "../_components/LastPage";
+import { toBase64, urlToFile } from "@/app/_utils/imageUtils";
+import { useUser } from "@clerk/nextjs";
 
 function ViewStory({ params }) {
+  const { user } = useUser();
   const [story, setStory] = useState();
   const bookRef = useRef();
   const [count, setCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
-  const title = getTitle(story?.output)
+  const title = getTitle(story?.output);
 
   useEffect(() => {
     getStory();
-  }, [])
+  }, []);
 
   const getStory = async () => {
-    const result = await db.select().from(StoryData)
+    const result = await db
+      .select()
+      .from(StoryData)
       .where(eq(StoryData.storyId, params.id));
     setStory(result[0]);
-    setTotalPages(result[0].output?.chapters?.length + 2)
-  }
+    setTotalPages(result[0].output?.chapters?.length + 2);
+  };
+
+  const regenerateImage = async (chapter) => {
+    if (!story?.output?.chapters) {
+      return;
+    }
+
+    const chapterIndex = story.output.chapters.findIndex(
+      (x) => x.title === chapter.title
+    );
+
+    const imageFile = await urlToFile(story.coverImage);
+    const image = await toBase64(imageFile);
+
+    const imageUrl = await generateImage(chapter.image_prompt, image);
+
+    const savedImageUrl = await saveImage(imageUrl);
+
+    story.output.chapters[chapterIndex].chapter_image = savedImageUrl;
+
+    setStory({ ...story });
+
+    await db
+      .update(StoryData)
+      .set({
+        output: story.output,
+      })
+      .where(eq(StoryData.id, story.id));
+  };
 
   const storyPages = useMemo(() => {
-    const totalChapters = story?.output?.chapters?.length
+    const totalChapters = story?.output?.chapters?.length;
+    const userEmail = user?.primaryEmailAddress?.emailAddress;
 
-    let pages = []
+    let pages = [];
 
     if (totalChapters > 0) {
       pages = [...Array(totalChapters)].map((_, index) => {
-        const chapter = story?.output.chapters[index]
+        const chapter = story?.output.chapters[index];
 
         const image = chapter.chapter_image ? (
           <div key={`${index + 1}-img`} className="bg-white p-10 border">
-            {chapter?.chapter_image && (
-              <Image src={chapter?.chapter_image} />
-            )}
+            {chapter?.chapter_image && <Image src={chapter?.chapter_image} />}
           </div>
         ) : null;
 
-        const content = <div key={index + 1} className='bg-white p-10 border'>
+        const content = (
+          <div key={index + 1} className="bg-white p-10 border">
           <StoryPages
             storyId={story?.id}
             chapter={story?.output.chapters[index]}
             chapterNumber={index}
+              regenerateImage={
+                userEmail && story?.userEmail === userEmail
+                  ? regenerateImage
+                  : null
+              }
           />
         </div>
+        );
 
-        return image ? [image, content] : content
-      })
+        return image ? [image, content] : content;
+      });
     }
 
-    return pages.flat()
-  }, [story])
+    return pages.flat();
+  }, [story, user]);
 
   const bookPages = useMemo(() => {
-    const totalChapters = story?.output?.chapters?.length
+    const totalChapters = story?.output?.chapters?.length;
 
     if (totalChapters > 0) {
       return [
@@ -73,12 +117,12 @@ function ViewStory({ params }) {
         ...storyPages,
         <div key={totalChapters + 1}>
           <LastPage story={story} />
-        </div>
-      ]
+        </div>,
+      ];
     }
 
-    return []
-  }, [story, storyPages])
+    return [];
+  }, [story, storyPages]);
 
   const onFlip = () => {
     if (!bookRef.current) {
