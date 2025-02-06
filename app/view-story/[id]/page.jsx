@@ -1,6 +1,6 @@
 "use client";
 import { generateImage, saveImage } from "@/app/_utils/api";
-import { getTitle } from "@/app/_utils/storyUtils";
+import { getChapterTitle, getTitle } from "@/app/_utils/storyUtils";
 import { db } from "@/config/db";
 import { StoryData } from "@/config/schema";
 import { Image } from "@nextui-org/react";
@@ -46,7 +46,7 @@ function ViewStory({ params }) {
     }
 
     const chapterIndex = story.output.chapters.findIndex(
-      (x) => x.title === chapter.title
+      (x) => getChapterTitle(x) === getChapterTitle(chapter)
     );
 
     const imageFile = await urlToFile(story.coverImage);
