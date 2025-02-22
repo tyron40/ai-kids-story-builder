@@ -1,44 +1,44 @@
-import { Input } from "@nextui-org/input";
-import { Button, Image, useDisclosure } from "@nextui-org/react";
-import React from "react";
-import TakePhoto from "./TakePhoto";
+import { Input } from "@nextui-org/input"
+import { Button, Image, useDisclosure } from "@nextui-org/react"
+import React from "react"
+import TakePhoto from "./TakePhoto"
 
-function ImageInput({ userSelection }: any) {
-  const [image, setImage] = React.useState<string | null>(null);
+export default function ImageInput({ userSelection }: any) {
+  const [image, setImage] = React.useState<string | null>(null)
   const {
     isOpen: isTakePhotoOpen,
     onOpen: onTakePhotoOpen,
     onClose: onTakePhotoClose,
-    onOpenChange: onTakePhotoOpenChange
+    onOpenChange: onTakePhotoOpenChange,
   } = useDisclosure()
 
   const onFilePick: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
 
     if (file) {
-      setImage(URL.createObjectURL(file));
+      setImage(URL.createObjectURL(file))
       userSelection({
         fieldName: "storyImage",
         fieldValue: file,
-      });
+      })
     }
-  };
+  }
 
   const onPhotoPick = (image: string) => {
     setImage(image)
     userSelection({
       fieldName: "storyImage",
       fieldValue: image,
-    });
+    })
   }
 
   const onFileRemove = () => {
-    setImage(null);
+    setImage(null)
     userSelection({
       fieldName: "storyImage",
       fieldValue: null,
-    });
-  };
+    })
+  }
 
   return (
     <div>
@@ -54,12 +54,10 @@ function ImageInput({ userSelection }: any) {
           className="max-w-md"
           onChange={onFilePick}
         />
-        <Button onPress={onTakePhotoOpen}>
-          Take Photo
-        </Button>
+        <Button onPress={onTakePhotoOpen}>Take Photo</Button>
         {image && (
           <div className="relative flex justify-center items-center gap-2 max-h-[180px]">
-            <Image src={image} className="max-h-[180px]"/>
+            <Image src={image} className="max-h-[180px]" />
             <Button
               color="primary"
               onPress={onFileRemove}
@@ -77,7 +75,5 @@ function ImageInput({ userSelection }: any) {
         onPhotoPick={onPhotoPick}
       />
     </div>
-  );
+  )
 }
-
-export default ImageInput;

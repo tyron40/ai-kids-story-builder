@@ -1,20 +1,19 @@
-import { Button } from "@nextui-org/button";
+import { Button } from "@nextui-org/button"
 import {
   Modal,
   ModalBody,
   ModalContent,
   ModalFooter,
   ModalHeader,
-} from "@nextui-org/modal";
-import { Image } from "@nextui-org/react";
-import { useRef, useState } from "react";
-import { Camera } from "react-camera-pro";
+} from "@nextui-org/modal"
+import { useRef, useState } from "react"
+import { Camera, CameraType } from "react-camera-pro"
 
 interface ITakePhoto {
-  isOpen: boolean;
-  onClose: () => void;
-  onOpenChange: () => void;
-  onPhotoPick: (image: string) => void;
+  isOpen: boolean
+  onClose: () => void
+  onOpenChange: () => void
+  onPhotoPick: (image: string) => void
 }
 
 export default function TakePhoto({
@@ -23,26 +22,26 @@ export default function TakePhoto({
   onOpenChange,
   onPhotoPick,
 }: ITakePhoto) {
-  const camera = useRef(null);
-  const [photo, setPhoto] = useState<string | null>(null);
+  const camera = useRef<CameraType>(null)
+  const [photo, setPhoto] = useState<string | null>(null)
 
   const onTakePhoto = () => {
     if (!camera.current) {
-      return;
+      return
     }
 
-    const photo = camera.current.takePhoto();
-    setPhoto(photo);
-  };
+    const photo = camera.current.takePhoto("base64url")
+    setPhoto(photo as string)
+  }
 
   const onRetakePhoto = () => {
-    setPhoto(null);
-  };
+    setPhoto(null)
+  }
 
   const onPickPhoto = () => {
-    onPhotoPick(photo!);
-    onClose();
-  };
+    onPhotoPick(photo!)
+    onClose()
+  }
 
   return (
     <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="4xl">
@@ -64,7 +63,7 @@ export default function TakePhoto({
                 facingMode="environment"
               />
             ) : (
-              <img src={photo} width="100%" />
+              <img src={photo} width="100%" alt="" />
             )}
           </div>
         </ModalBody>
@@ -82,5 +81,5 @@ export default function TakePhoto({
         </ModalFooter>
       </ModalContent>
     </Modal>
-  );
+  )
 }

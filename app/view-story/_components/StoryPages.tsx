@@ -1,60 +1,60 @@
-import { Button } from "@nextui-org/button";
-import axios from "axios";
-import React, { useRef, useState } from "react";
-import { AiOutlineLoading } from "react-icons/ai";
-import { MdPlayCircleFilled } from "react-icons/md";
-import { toast } from "react-toastify";
+import { generateSpeech } from "@/app/_utils/api"
+import { Button } from "@nextui-org/button"
+import React, { useRef, useState } from "react"
+import { AiOutlineLoading } from "react-icons/ai"
+import { MdPlayCircleFilled } from "react-icons/md"
+import { toast } from "react-toastify"
 
 const StoryPages = React.forwardRef((props: any, ref: any) => {
-  const { storyId, chapter, chapterNumber, regenerateImage } = props;
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [isAudioLoading, setIsAudioLoading] = useState<boolean>(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [isRegeneratingImage, setIsRegeneratingImage] =
-    useState<boolean>(false);
-  const notify = (msg: string) => toast(msg);
-  const notifyError = (msg: string) => toast.error(msg);
+  const { storyId, chapter, chapterNumber, regenerateImage } = props
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [isAudioLoading, setIsAudioLoading] = useState<boolean>(false)
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [isRegeneratingImage, setIsRegeneratingImage] = useState<boolean>(false)
+  const notify = (msg: string) => toast(msg)
+  const notifyError = (msg: string) => toast.error(msg)
 
   const playSpeech = async () => {
     if (isAudioLoading) {
-      return;
+      return
     }
 
     if (audioUrl) {
-      audioRef.current?.play();
-      return;
+      audioRef.current?.play()
+      return
     }
 
     try {
-      setIsAudioLoading(true);
-      const response = await axios.post("/api/generate-speech", {
-        storyId,
-        chapter: chapterNumber,
-        text: chapter.chapter_text,
-      });
+      setIsAudioLoading(true)
 
-      setAudioUrl(response?.data?.audioUrl);
+      const audioUrl = await generateSpeech(
+        storyId,
+        chapterNumber,
+        chapter.chapter_text
+      )
+
+      setAudioUrl(audioUrl)
     } finally {
-      setIsAudioLoading(false);
+      setIsAudioLoading(false)
     }
-  };
+  }
 
   const onRegenerateImage = async () => {
     if (isRegeneratingImage) {
-      return;
+      return
     }
 
     try {
-      setIsRegeneratingImage(true);
-      await regenerateImage(chapter);
-      notify("Chapter image updated");
+      setIsRegeneratingImage(true)
+      await regenerateImage(chapter)
+      notify("Chapter image updated")
     } catch (error) {
-      console.error(error);
-      notifyError("Something went wrong, please try again.");
+      console.error(error)
+      notifyError("Something went wrong, please try again.")
     } finally {
-      setIsRegeneratingImage(false);
+      setIsRegeneratingImage(false)
     }
-  };
+  }
 
   return (
     <div>
@@ -91,7 +91,7 @@ const StoryPages = React.forwardRef((props: any, ref: any) => {
         </Button>
       )}
     </div>
-  );
-});
+  )
+})
 
-export default StoryPages;
+export default StoryPages

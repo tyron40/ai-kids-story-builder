@@ -1,7 +1,7 @@
-import { getTitle } from "@/app/_utils/storyUtils";
-import { Page, Image, Text, View, Document } from "@react-pdf/renderer";
-import { useMemo } from "react";
-import { createTw } from "react-pdf-tailwind";
+import { getTitle } from "@/app/_utils/storyUtils"
+import { Page, Image, Text, View, Document } from "@react-pdf/renderer"
+import { useMemo } from "react"
+import { createTw } from "react-pdf-tailwind"
 
 const tw = createTw({
   theme: {
@@ -11,7 +11,7 @@ const tw = createTw({
       },
     },
   },
-});
+})
 
 function Chapter({ chapter }: { chapter: any }) {
   return (
@@ -29,27 +29,25 @@ function Chapter({ chapter }: { chapter: any }) {
       <Text style={tw("text-2xl font-bold text-primary flex justify-between")}>
         {chapter.chapter_title ?? ""}
       </Text>
-      <Text
-        style={tw("text-lg p-10 mt-3 rounded-lg bg-slate-100")}
-      >
+      <Text style={tw("text-lg p-10 mt-3 rounded-lg bg-slate-100")}>
         {chapter.chapter_text ?? ""}
       </Text>
     </View>
-  );
+  )
 }
 
 export default function StoryPDF({ story }: { story: any }) {
-  const title = getTitle(story?.output);
+  const title = getTitle(story?.output)
 
   const chapters = useMemo(() => {
     if (!story?.output?.chapters) {
-      return null;
+      return null
     }
 
     return story.output.chapters.map((chapter: any, index: number) => {
-      return <Chapter key={index} chapter={chapter} />;
-    });
-  }, [story]);
+      return <Chapter key={index} chapter={chapter} />
+    })
+  }, [story])
 
   return (
     <Document>
@@ -73,5 +71,5 @@ export default function StoryPDF({ story }: { story: any }) {
         </Page>
       ))}
     </Document>
-  );
+  )
 }
