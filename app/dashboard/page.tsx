@@ -1,4 +1,3 @@
-import React from "react"
 import DashboardHeader from "./_components/DashboardHeader"
 import UserStoryList from "./_components/UserStoryList"
 

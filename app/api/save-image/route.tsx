@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
   const fileName = "/ai-story/" + Date.now() + ".png"
   const imageRef = ref(storage, fileName)
 
-  await uploadString(imageRef, base64Image, "data_url").then((snapshot) => {
-    console.log("File Upladed")
+  await uploadString(imageRef, base64Image, "data_url").then(() => {
+    console.log("File Uploaded")
   })
 
   const downloaderUrl = await getDownloadURL(imageRef)
@@ -27,6 +27,6 @@ const convertImage = async (imageUrl: string) => {
     const base64Image = Buffer.from(respose.data).toString("base64")
     return base64Image
   } catch (e) {
-    console.log("Error coverting base 64 image")
+    console.log("Error coverting base 64 image", e)
   }
 }

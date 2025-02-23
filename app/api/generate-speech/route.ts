@@ -34,10 +34,10 @@ export async function POST(req: NextRequest) {
     text,
   }
 
-  const output: any = await replicate.run(
+  const output = (await replicate.run(
     "jaaari/kokoro-82m:dfdf537ba482b029e0a761699e6f55e9162cfd159270bfe0e44857caa5f275a6",
     { input }
-  )
+  )) as unknown as string
 
   const data = await readWavFile(output)
 

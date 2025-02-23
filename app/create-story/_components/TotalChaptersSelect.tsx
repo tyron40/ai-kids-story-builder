@@ -1,12 +1,17 @@
 import { Select, SelectItem } from "@nextui-org/select"
-import React from "react"
+import { ChangeEventHandler, useState } from "react"
+import { UserSelectionHandler } from "./types"
 
 const range = Array.from({ length: 10 }, (_, i) => i + 1)
 
-export default function TotalChaptersSelect({ userSelection }: any) {
-  const [value, setValue] = React.useState<string>("")
+export default function TotalChaptersSelect({
+  userSelection,
+}: {
+  userSelection: UserSelectionHandler
+}) {
+  const [value, setValue] = useState<string>("")
 
-  const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const onChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
     setValue(e.target.value)
     userSelection({
       fieldName: "totalChapters",

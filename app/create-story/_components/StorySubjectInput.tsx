@@ -1,13 +1,21 @@
 import { Textarea } from "@nextui-org/input"
-import React from "react"
+import { UserSelectionHandler } from "../page"
 
-export default function StorySubjectInput({ userSelection }: any) {
+export default function StorySubjectInput({
+  userSelection,
+}: {
+  userSelection: UserSelectionHandler
+}) {
   return (
     <div>
-      <label className="font-bold text-4xl text-primary">
+      <label
+        htmlFor="subject-input"
+        className="font-bold text-4xl text-primary"
+      >
         1. Subject of the story
       </label>
       <Textarea
+        id="subject-input"
         placeholder="Write the subject of the story which you want to generate"
         size="lg"
         classNames={{

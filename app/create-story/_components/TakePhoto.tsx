@@ -6,6 +6,7 @@ import {
   ModalFooter,
   ModalHeader,
 } from "@nextui-org/modal"
+import { Image } from "@nextui-org/react"
 import { useRef, useState } from "react"
 import { Camera, CameraType } from "react-camera-pro"
 
@@ -63,18 +64,26 @@ export default function TakePhoto({
                 facingMode="environment"
               />
             ) : (
-              <img src={photo} width="100%" alt="" />
+              <Image src={photo} width="100%" alt="" />
             )}
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button onPress={onClose} color="danger">
+          <Button color="danger" onPress={onClose}>
             Cancel
           </Button>
-          {!photo && <Button onPress={onTakePhoto}>Take photo</Button>}
-          {photo && <Button onPress={onRetakePhoto}>Retake photo</Button>}
+          {!photo && (
+            <Button color="primary" onPress={onTakePhoto}>
+              Take photo
+            </Button>
+          )}
           {photo && (
-            <Button onPress={onPickPhoto} color="primary">
+            <Button color="primary" onPress={onRetakePhoto}>
+              Retake photo
+            </Button>
+          )}
+          {photo && (
+            <Button color="primary" onPress={onPickPhoto}>
               Pick photo
             </Button>
           )}

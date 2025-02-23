@@ -3,6 +3,7 @@ import "./globals.css"
 import Provider from "./provider"
 import { Nunito } from "next/font/google"
 import { ClerkProvider } from "@clerk/nextjs"
+import { ReactNode } from "react"
 
 const MyAppFont = Nunito({ subsets: ["latin"] })
 
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: ReactNode
 }>) {
   return (
     <ClerkProvider>

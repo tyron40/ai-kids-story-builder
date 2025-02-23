@@ -3,7 +3,7 @@ import { UserDetailContext } from "@/app/_context/UserDetailConext"
 import { Button } from "@nextui-org/button"
 import Image from "next/image"
 import Link from "next/link"
-import React, { useContext } from "react"
+import { useContext } from "react"
 
 export default function DashboardHeader() {
   const { userDetail } = useContext(UserDetailContext)

@@ -1,7 +1,6 @@
 import { Button } from "@nextui-org/button"
 import Image from "next/image"
 import Link from "next/link"
-import React from "react"
 
 export default function Hero() {
   return (
@@ -12,7 +11,7 @@ export default function Hero() {
             Craft Magical Stories for kids in Minutes
           </h2>
           <p className="text-2xl text-primary font-light">
-            Create fun and personalised stories that bring your child's
+            Create fun and personalised stories that bring your child&apos;s
             adventures to life and spark their passion for reading. It only
             takes a few seconds!
           </p>

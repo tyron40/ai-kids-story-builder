@@ -4,9 +4,9 @@
  * $ npm install @google/generative-ai
  */
 
-const { GoogleGenerativeAI } = require("@google/generative-ai")
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
+const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY ?? ""
 const genAI = new GoogleGenerativeAI(apiKey)
 
 const model = genAI.getGenerativeModel({
@@ -19,6 +19,47 @@ const generationConfig = {
   topK: 64,
   maxOutputTokens: 8192,
   responseMimeType: "application/json",
+}
+
+export interface GAIChapter {
+  chapter_title: string
+  chapter_text: string
+  image_prompt: string
+  chapter_image: string
+}
+
+export interface GAIStoryData {
+  story_cover: {
+    title: string
+    image_prompt: string
+  }
+  chapters: GAIChapter[]
+}
+
+export function isChapter(data: object): data is GAIChapter {
+  return (
+    "chapter_title" in data && "chapter_text" in data && "image_prompt" in data
+  )
+}
+
+export function isStoryData(data: object): data is GAIStoryData {
+  if (!("story_cover" in data && "chapters" in data)) {
+    return false
+  }
+
+  if (!data.story_cover || !data.chapters) {
+    return false
+  }
+
+  if (typeof data.story_cover !== "object" || !Array.isArray(data.chapters)) {
+    return false
+  }
+
+  if (!("title" in data.story_cover && "image_prompt" in data.story_cover)) {
+    return false
+  }
+
+  return data.chapters.every((x) => isChapter(x))
 }
 
 export const chatSession = model.startChat({

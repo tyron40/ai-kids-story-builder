@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     ? "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4"
     : "black-forest-labs/flux-schnell"
 
-  const output: any = await replicate.run(model, { input })
+  const output = await replicate.run(model, { input }) as string[]
 
   return NextResponse.json({ imageUrl: output[0] })
 }

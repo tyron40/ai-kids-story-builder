@@ -1,6 +1,9 @@
 import axios from "axios"
 
-export async function generateImage(prompt: string, image?: string) {
+export async function generateImage(
+  prompt: string,
+  image?: string
+): Promise<string> {
   const response = await axios.post("/api/generate-image", {
     image,
     prompt,
@@ -9,7 +12,7 @@ export async function generateImage(prompt: string, image?: string) {
   return response?.data?.imageUrl
 }
 
-export async function saveImage(url: string) {
+export async function saveImage(url: string): Promise<string> {
   const response = await axios.post("/api/save-image", {
     url,
   })
@@ -21,7 +24,7 @@ export async function generateSpeech(
   storyId: number,
   chapter: number,
   text: string
-) {
+): Promise<string> {
   const response = await axios.post("/api/generate-speech", {
     storyId,
     chapter,

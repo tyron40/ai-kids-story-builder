@@ -1,12 +1,10 @@
 "use client"
-import { db } from "@/config/db"
-import { Users } from "@/config/schema"
 import { PayPalButtons } from "@paypal/react-paypal-js"
-import React, { useContext, useEffect, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { UserDetailContext } from "../_context/UserDetailConext"
-import { eq } from "drizzle-orm"
 import { useRouter } from "next/navigation"
 import { toast } from "react-toastify"
+import { updateUserCredits } from "../_utils/db"
 
 const Options = [
   {
@@ -32,8 +30,8 @@ const Options = [
 ]
 
 export default function BuyCredits() {
-  const [selectedPrice, setSelectedPrice] = useState<number>(0)
-  const [selectedOption, setSelectedOption] = useState<number>(0)
+  const [selectedPrice, setSelectedPrice] = useState(0)
+  const [selectedOption, setSelectedOption] = useState(0)
   const { userDetail, setUserDetail } = useContext(UserDetailContext)
   const router = useRouter()
   const notify = (msg: string) => toast(msg)
@@ -48,24 +46,19 @@ export default function BuyCredits() {
   }, [selectedOption])
 
   const OnPaymentSuccess = async () => {
-    console.log(
-      "InSide Paypal",
-      Options[selectedOption]?.credits + userDetail?.credit
-    )
+    const credit = Options[selectedOption]?.credits + userDetail!.credit!
 
-    const result = await db
-      .update(Users)
-      .set({
-        credit: Options[selectedOption]?.credits + userDetail?.credit,
-      })
-      .where(eq(Users.userEmail, userDetail.userEmail))
+    console.log("InSide Paypal", credit)
+
+    const result = await updateUserCredits(userDetail!.userEmail!, credit)
 
     if (result) {
       notify("Credit is Added")
-      setUserDetail((prev: any) => ({
+      setUserDetail((prev) => ({
         ...prev,
-        ["credit"]: Options[selectedOption]?.credits + userDetail?.credit,
+        ["credit"]: credit,
       }))
+
       router.replace("/dashboard")
     } else {
       notifyError("Server Error")
@@ -78,7 +71,7 @@ export default function BuyCredits() {
       <div className="grid grid-cols-1 md:grid-cols-2 mt-10 gap-10 items-center justify-center">
         <div>
           {Options.map((option) => (
-            <div
+            <button
               key={option.id}
               className={`p-6 my-3 border bg-primary text-center 
                     rounded-lg text-white cursor-pointer 
@@ -91,7 +84,7 @@ export default function BuyCredits() {
                 Get {option.credits} Credits= {option.credits} Story
               </h2>
               <h2 className="font-bold text-2xl">${option.price}</h2>
-            </div>
+            </button>
           ))}
         </div>
         <div>
@@ -99,14 +92,17 @@ export default function BuyCredits() {
             <PayPalButtons
               style={{ layout: "vertical" }}
               disabled={!selectedOption || selectedOption == 0}
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               onApprove={() => OnPaymentSuccess()}
               onCancel={() => notifyError("Payment canceld")}
               createOrder={(data, actions) => {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
                 return actions.order.create({
                   purchase_units: [
                     {
+                      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                       // @ts-ignore
                       amount: {
                         value: selectedPrice.toFixed(2),

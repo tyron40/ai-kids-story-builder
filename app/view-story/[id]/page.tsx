@@ -1,11 +1,7 @@
 "use client"
 import { generateImage, saveImage } from "@/app/_utils/api"
-import { getChapterTitle, getTitle } from "@/app/_utils/storyUtils"
-import { db } from "@/config/db"
-import { StoryData } from "@/config/schema"
 import { Image } from "@nextui-org/react"
-import { eq } from "drizzle-orm"
-import React, { useEffect, useMemo, useRef, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   IoIosArrowDroprightCircle,
   IoIosArrowDropleftCircle,
@@ -17,81 +13,108 @@ import StoryPages from "../_components/StoryPages"
 import LastPage from "../_components/LastPage"
 import { toBase64, urlToFile } from "@/app/_utils/imageUtils"
 import { useUser } from "@clerk/nextjs"
+import { getStory, StoryItem, updateStory } from "@/app/_utils/db"
+import { Chapter } from "@/config/schema"
+import CustomLoader from "@/app/create-story/_components/CustomLoader"
 
-function ViewStory({ params }) {
+interface PageFlipRef {
+  pageFlip: () => {
+    getCurrentPageIndex: () => number
+    getPageCount: () => number
+    flipPrev: () => void
+    flipNext: () => void
+  }
+}
+
+interface PageParams {
+  id: string
+}
+
+export default function ViewStory({ params }: { params: PageParams }) {
   const { user } = useUser()
-  const [story, setStory] = useState()
-  const bookRef = useRef()
+  const [story, setStory] = useState<StoryItem | null>(null)
+  const bookRef = useRef<PageFlipRef>(null)
   const [count, setCount] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
+  const [loading, setLoading] = useState(false)
 
-  const title = getTitle(story?.output)
+  const initStory = async () => {
+    try {
+      setLoading(true)
+      const story = await getStory(params.id)
+      setStory(story)
+      setTotalPages(story.output.chapters.length + 2)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    getStory()
+    initStory()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const getStory = async () => {
-    const result = await db
-      .select()
-      .from(StoryData)
-      .where(eq(StoryData.storyId, params.id))
-    setStory(result[0])
-    setTotalPages(result[0].output?.chapters?.length + 2)
-  }
+  const regenerateImage = useCallback(
+    async (chapter: Chapter) => {
+      if (!story) {
+        return
+      }
 
-  const regenerateImage = async (chapter) => {
-    if (!story?.output?.chapters) {
-      return
-    }
+      const chapterIndex = story.output.chapters.findIndex(
+        (x) => x.chapter_title === chapter.chapter_title
+      )
 
-    const chapterIndex = story.output.chapters.findIndex(
-      (x) => getChapterTitle(x) === getChapterTitle(chapter)
-    )
+      const imageFile = await urlToFile(story.coverImage)
+      const image = await toBase64(imageFile)
 
-    const imageFile = await urlToFile(story.coverImage)
-    const image = await toBase64(imageFile)
+      const imageUrl = await generateImage(
+        chapter.image_prompt,
+        image as string
+      )
 
-    const imageUrl = await generateImage(chapter.image_prompt, image)
+      const savedImageUrl = await saveImage(imageUrl)
 
-    const savedImageUrl = await saveImage(imageUrl)
+      story.output.chapters[chapterIndex].chapter_image = savedImageUrl
 
-    story.output.chapters[chapterIndex].chapter_image = savedImageUrl
-
-    setStory({ ...story })
-
-    await db
-      .update(StoryData)
-      .set({
-        output: story.output,
+      setStory({
+        ...story,
       })
-      .where(eq(StoryData.id, story.id))
-  }
+
+      await updateStory(story.id, story.output)
+    },
+    [story]
+  )
 
   const storyPages = useMemo(() => {
-    const totalChapters = story?.output?.chapters?.length
+    if (!story) {
+      return []
+    }
+
+    const totalChapters = story.output.chapters.length
     const userEmail = user?.primaryEmailAddress?.emailAddress
 
-    let pages = []
+    let pages: (React.JSX.Element | React.JSX.Element[])[] = []
 
     if (totalChapters > 0) {
       pages = [...Array(totalChapters)].map((_, index) => {
-        const chapter = story?.output.chapters[index]
+        const chapter = story.output.chapters[index]
 
         const image = chapter.chapter_image ? (
           <div key={`${index + 1}-img`} className="bg-white p-10 border">
-            {chapter?.chapter_image && <Image src={chapter?.chapter_image} />}
+            {chapter?.chapter_image && (
+              <Image src={chapter?.chapter_image} alt="" />
+            )}
           </div>
         ) : null
 
         const content = (
           <div key={index + 1} className="bg-white p-10 border">
             <StoryPages
-              storyId={story?.id}
-              chapter={story?.output.chapters[index]}
+              storyId={story.id}
+              chapter={story.output.chapters[index]}
               chapterNumber={index}
               regenerateImage={
-                userEmail && story?.userEmail === userEmail
+                userEmail && story?.userEmail === userEmail && story
                   ? regenerateImage
                   : null
               }
@@ -104,10 +127,14 @@ function ViewStory({ params }) {
     }
 
     return pages.flat()
-  }, [story, user])
+  }, [regenerateImage, story, user?.primaryEmailAddress?.emailAddress])
 
   const bookPages = useMemo(() => {
-    const totalChapters = story?.output?.chapters?.length
+    if (!story) {
+      return []
+    }
+
+    const totalChapters = story.output.chapters.length
 
     if (totalChapters > 0) {
       return [
@@ -136,12 +163,15 @@ function ViewStory({ params }) {
     setCount(currentIndex)
   }
 
+  const title = story?.output.story_cover.title ?? ""
+
   return (
     <div className="p-10 md:px-20 lg:px-40 flex flex-col min-h-screen">
       <h2 className="font-bold text-4xl text-center p-10 bg-primary text-white">
         {title}
       </h2>
       <div className="relative flex justify-center h-[500px] mt-10">
+        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
         {/* @ts-ignore */}
         <HTMLFlipBook
           size="stretch"
@@ -162,7 +192,7 @@ function ViewStory({ params }) {
           <button
             className="absolute left-0 top-[250px]"
             onClick={() => {
-              bookRef.current.pageFlip().flipPrev()
+              bookRef.current?.pageFlip().flipPrev()
             }}
           >
             <IoIosArrowDropleftCircle className="text-[40px] text-primary cursor-pointer" />
@@ -173,15 +203,14 @@ function ViewStory({ params }) {
           <button
             className="absolute right-0 top-[250px]"
             onClick={() => {
-              bookRef.current.pageFlip().flipNext()
+              bookRef.current?.pageFlip().flipNext()
             }}
           >
             <IoIosArrowDroprightCircle className="text-[40px] text-primary cursor-pointer" />
           </button>
         )}
       </div>
+      <CustomLoader isLoading={loading} />
     </div>
   )
 }
-
-export default ViewStory

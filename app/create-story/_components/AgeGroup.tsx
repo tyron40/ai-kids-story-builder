@@ -1,6 +1,7 @@
 import Image from "next/image"
-import React, { useState } from "react"
+import { useState } from "react"
 import { OptionField } from "./StoryType"
+import { UserSelectionHandler } from "./types"
 
 const OptionList = [
   {
@@ -20,7 +21,11 @@ const OptionList = [
   },
 ]
 
-export default function AgeGroup({ userSelection }: any) {
+export default function AgeGroup({
+  userSelection,
+}: {
+  userSelection: UserSelectionHandler
+}) {
   const [selectedOption, setSelectedOption] = useState<string>()
 
   const onUserSelect = (item: OptionField) => {
@@ -36,13 +41,13 @@ export default function AgeGroup({ userSelection }: any) {
       <label className="font-bold text-4xl text-primary">3. Age Group</label>
       <div className="grid grid-cols-3 gap-5 mt-3">
         {OptionList.map((item, index) => (
-          <div
+          <button
             key={index}
-            className={`relative  grayscale hover:grayscale-0 cursor-pointer p-1
+            className={`relative  grayscale hover:grayscale-0 cursor-pointer p-1 border-2 rounded-3xl border-primary
                 ${
                   selectedOption == item.label
-                    ? "grayscale-0 border-2 rounded-3xl border-primary"
-                    : "grayscale"
+                    ? "grayscale-0"
+                    : "grayscale border-transparent"
                 }
                 `}
             onClick={() => onUserSelect(item)}
@@ -57,7 +62,7 @@ export default function AgeGroup({ userSelection }: any) {
               height={500}
               className="object-cover h-[260px] rounded-3xl"
             />
-          </div>
+          </button>
         ))}
       </div>
     </div>

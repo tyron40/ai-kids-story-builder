@@ -1,12 +1,20 @@
 import Image from "next/image"
-import React from "react"
+import { ForwardedRef, forwardRef } from "react"
 
-const BookCoverPage = React.forwardRef((props: any, ref: any) => {
-  return (
-    <div ref={ref}>
-      <Image src={props.imageUrl} alt="cover" width={500} height={500} />
-    </div>
-  )
-})
+interface BookCoverPageProps {
+  imageUrl: string
+}
+
+const BookCoverPage = forwardRef(
+  (props: BookCoverPageProps, ref: ForwardedRef<HTMLDivElement>) => {
+    return (
+      <div ref={ref}>
+        <Image src={props.imageUrl} alt="cover" width={500} height={500} />
+      </div>
+    )
+  }
+)
+
+BookCoverPage.displayName = "BookCoverPage"
 
 export default BookCoverPage

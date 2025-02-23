@@ -1,187 +1,164 @@
 "use client"
-import React, { useContext, useState } from "react"
+import { useUser } from "@clerk/nextjs"
+import { chatSession, isStoryData } from "@/config/GeminiAi"
+import { db } from "@/config/db"
+import { Users } from "@/config/schema"
+import { Button } from "@nextui-org/button"
+import { eq } from "drizzle-orm"
+import { useRouter } from "next/navigation"
+import { useContext, useState } from "react"
+import { toast } from "react-toastify"
+import { v4 as uuidv4 } from "uuid"
+
+import { UserDetailContext } from "../_context/UserDetailConext"
+import { generateImage, saveImage } from "../_utils/api"
+import { toBase64 } from "../_utils/imageUtils"
+import AgeGroup from "./_components/AgeGroup"
+import CustomLoader from "./_components/CustomLoader"
+import ImageInput from "./_components/ImageInput"
+import ImageStyle from "./_components/ImageStyle"
 import StorySubjectInput from "./_components/StorySubjectInput"
 import StoryType from "./_components/StoryType"
-import AgeGroup from "./_components/AgeGroup"
-import ImageStyle from "./_components/ImageStyle"
-import { Button } from "@nextui-org/button"
-import { chatSession } from "@/config/GeminiAi"
-import { db } from "@/config/db"
-import { StoryData, Users } from "@/config/schema"
-//@ts-ignore
-import uuid4 from "uuid4"
-import CustomLoader from "./_components/CustomLoader"
-import { useRouter } from "next/navigation"
-import { toast } from "react-toastify"
-import { useUser } from "@clerk/nextjs"
-import { UserDetailContext } from "../_context/UserDetailConext"
-import { eq } from "drizzle-orm"
 import TotalChaptersSelect from "./_components/TotalChaptersSelect"
-import ImageInput from "./_components/ImageInput"
-import { toBase64 } from "../_utils/imageUtils"
-import { generateImage, saveImage } from "../_utils/api"
+import { getStoryPrompt } from "../_utils/storyUtils"
+import { createStory } from "../_utils/db"
+import { FormDataType, UserSelectionHandler } from "./_components/types"
 
-const CREATE_STORY_PROMPT = process.env.NEXT_PUBLIC_CREATE_STORY_PROMPT
-export interface FieldData {
-  fieldName: string
-  fieldValue: string
+async function getImageData(storyImage: File | string) {
+  if (typeof storyImage === "object") {
+    return (await toBase64(storyImage)) as string
+  }
+
+  return storyImage
 }
 
-export interface FormDataType {
-  storySubject: string
-  storyImage: File | string
-  storyType: string
-  imageStyle: string
-  ageGroup: string
-  totalChapters: number
+const defaultFormData: FormDataType = {
+  storySubject: "",
+  storyImage: null,
+  storyType: "",
+  imageStyle: "",
+  ageGroup: "",
+  totalChapters: 5,
 }
 
 export default function CreateStory() {
-  const [formData, setFormData] = useState<FormDataType>()
-  const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const notify = (msg: string) => toast(msg)
-  const notifyError = (msg: string) => toast.error(msg)
   const { user } = useUser()
   const { userDetail } = useContext(UserDetailContext)
+  const [formData, setFormData] = useState(defaultFormData)
+  const [loading, setLoading] = useState(false)
 
-  /**
-   * used to add data to form
-   * @param data
-   */
-  const onHandleUserSelection = (data: FieldData) => {
-    setFormData((prev: any) => ({
+  const notify = (msg: string) => toast(msg)
+  const notifyError = (msg: string) => toast.error(msg)
+
+  const onHandleUserSelection: UserSelectionHandler = (data) => {
+    setFormData((prev) => ({
       ...prev,
       [data.fieldName]: data.fieldValue,
     }))
     console.log(formData)
   }
 
-  const GenerateStory = async () => {
-    if (userDetail.credit <= 0) {
+  const saveStory = async (output: string, imageUrl: string) => {
+    const recordId = uuidv4()
+    return createStory({
+      storyId: recordId,
+      ageGroup: formData?.ageGroup,
+      imageStyle: formData?.imageStyle,
+      storySubject: formData?.storySubject,
+      storyType: formData?.storyType,
+      output: JSON.parse(output),
+      coverImage: imageUrl,
+      userEmail: user!.primaryEmailAddress?.emailAddress ?? "",
+      userImage: user!.imageUrl,
+      userName: user!.fullName,
+    })
+  }
+
+  const updateUserCredits = async () => {
+    await db
+      .update(Users)
+      .set({
+        credit: Number(userDetail!.credit! - 1),
+      })
+      .where(eq(Users.userEmail, user?.primaryEmailAddress?.emailAddress ?? ""))
+      .returning({ id: Users.id })
+  }
+
+  const onGenerateImage = async (
+    prompt: string,
+    image: string | null
+  ): Promise<string> => {
+    const generatedImageUrl = await generateImage(prompt, image as string)
+    return await saveImage(generatedImageUrl)
+  }
+
+  const onGenerateStoryData = async () => {
+    const storyPrompt = getStoryPrompt(formData)
+    const result = await chatSession.sendMessage(storyPrompt)
+
+    const story = JSON.parse(
+      result?.response.text().replace(/(})(,?)(\n *\})/g, "$1,")
+    )
+
+    if (!isStoryData(story)) {
+      throw new Error("Generated data is invalid")
+    }
+
+    return story
+  }
+
+  const onGenerateStory = async () => {
+    if (userDetail!.credit! <= 0) {
       notifyError("You dont have enough credits!")
       return
     }
 
-    setLoading(true)
-
-    const FINAL_PROMPT = CREATE_STORY_PROMPT?.replace(
-      "{ageGroup}",
-      formData?.ageGroup ?? ""
-    )
-      .replace("{storyType}", formData?.storyType ?? "")
-      .replace("{storySubject}", formData?.storySubject ?? "")
-      .replace("{imageStyle}", formData?.imageStyle ?? "")
-      .replace(
-        "{totalChapters}",
-        formData?.totalChapters ? formData.totalChapters.toString() : "4"
-      )
-
-    //Generate AI Story
-
     try {
-      const result = await chatSession.sendMessage(FINAL_PROMPT)
-      const story = JSON.parse(
-        result?.response.text().replace(/(})(,?)(\n *\})/g, "$1,")
-      )
+      setLoading(true)
 
-      // const jsonString=result?.response.text().replace(/":\s*"(.*?)"/g, '": "$1",')   // Adds comma after string values
-      // .replace(/":\s*(\d+)(?=\s*)/g, '": $1,') // Adds comma after numeric values
-      // .replace(/,\s*}/g, ' }'); // Removes the last comma before closing brace
-      // const story=JSON.parse(jsonString)
+      const story = await onGenerateStoryData()
 
-      //Generate Image
+      const image =
+        formData.storyImage !== null
+          ? await getImageData(formData.storyImage)
+          : null
 
-      let image = null
-
-      if (formData?.storyImage && typeof formData.storyImage === "string") {
-        image = formData.storyImage
-      }
-
-      if (formData?.storyImage && typeof formData.storyImage === "object") {
-        image = (await toBase64(formData?.storyImage)) as string
-      }
-
-      const prompt = image
+      const coverImagePrompt = image
         ? `${formData?.storySubject ?? ""}, ${formData?.imageStyle}`
-        : "Add text with  title:" +
+        : "Add text with title:" +
           story?.story_cover?.title +
           " in bold text for book cover, " +
           story?.story_cover?.image_prompt
 
-      const coverImageUrl = await generateImage(prompt, image as string)
-      const imageResult = await saveImage(coverImageUrl)
+      const coverImageUrl = await onGenerateImage(
+        coverImagePrompt,
+        image as string
+      )
 
-      const FirebaseStorageImageUrl = imageResult.data.imageUrl
-
+      // generate chapter images
       for (let index = 0; index < story.chapters.length; index++) {
         const chapter = story.chapters[index]
         if (chapter.image_prompt) {
-          const imageUrl = await generateImage(
+          const chapterImageUrl = await onGenerateImage(
             chapter.image_prompt,
             image as string
           )
-          const imageResult = await saveImage(imageUrl)
-          story.chapters[index].chapter_image = imageResult.data.imageUrl
+          story.chapters[index].chapter_image = chapterImageUrl
         }
       }
 
-      const resp: any = await SaveInDB(
-        JSON.stringify(story),
-        FirebaseStorageImageUrl
-      )
+      const created = await saveStory(JSON.stringify(story), coverImageUrl)
 
       notify("Story generated")
-      await UpdateUserCredits()
-
-      router?.replace("/view-story/" + resp[0].storyId)
+      await updateUserCredits()
+      router?.replace("/view-story/" + created[0].storyId)
     } catch (e) {
       console.log(e)
-      notifyError("Server Error, Try again")
+      notifyError("Something went wrong, please try again!")
     } finally {
       setLoading(false)
     }
-  }
-
-  /**
-   * Save Data in Database
-   * @param output AI Output
-   * @returns
-   */
-  const SaveInDB = async (output: string, imageUrl: string) => {
-    const recordId = uuid4()
-    setLoading(true)
-    try {
-      const result = await db
-        .insert(StoryData)
-        .values({
-          storyId: recordId,
-          ageGroup: formData?.ageGroup,
-          imageStyle: formData?.imageStyle,
-          storySubject: formData?.storySubject,
-          storyType: formData?.storyType,
-          output: JSON.parse(output),
-          coverImage: imageUrl,
-          userEmail: user?.primaryEmailAddress?.emailAddress,
-          userImage: user?.imageUrl,
-          userName: user?.fullName,
-        })
-        .returning({ storyId: StoryData?.storyId })
-      setLoading(false)
-      return result
-    } catch (e) {
-      setLoading(false)
-    }
-  }
-
-  const UpdateUserCredits = async () => {
-    await db
-      .update(Users)
-      .set({
-        credit: Number(userDetail?.credit - 1),
-      })
-      .where(eq(Users.userEmail, user?.primaryEmailAddress?.emailAddress ?? ""))
-      .returning({ id: Users.id })
   }
 
   return (
@@ -209,12 +186,12 @@ export default function CreateStory() {
         <Button
           color="primary"
           disabled={loading}
-          className="p-10 text-2xl"
-          onPress={GenerateStory}
+          className="p-8 text-2xl"
+          onPress={onGenerateStory}
         >
           Generate Story
         </Button>
-        <span>1 Credit will be used</span>
+        <span className="mt-2">1 Credit will be used</span>
       </div>
       <CustomLoader isLoading={loading} />
     </div>

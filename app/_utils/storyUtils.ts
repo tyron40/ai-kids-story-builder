@@ -1,15 +1,19 @@
-export function getTitle(story: any) {
-  if (!story) {
-    return ""
-  }
-
-  return story.story_cover?.title ?? story.title ?? story.story_title
+interface StoryPromptParams {
+  ageGroup: string
+  storyType: string
+  storySubject: string
+  imageStyle: string
+  totalChapters: number
 }
 
-export function getChapterTitle(chapter: any) {
-  if (!chapter) {
-    return ""
-  }
-
-  return chapter?.title ?? chapter.chapter_title
+export function getStoryPrompt(params: StoryPromptParams) {
+  return (process.env.NEXT_PUBLIC_CREATE_STORY_PROMPT ?? "")
+    .replace("{ageGroup}", params.ageGroup)
+    .replace("{storyType}", params.storyType)
+    .replace("{storySubject}", params.storySubject)
+    .replace("{imageStyle}", params.imageStyle)
+    .replace(
+      "{totalChapters}",
+      params.totalChapters ? params.totalChapters.toString() : "5"
+    )
 }
