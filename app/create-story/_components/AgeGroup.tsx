@@ -1,7 +1,6 @@
 import Image from "next/image"
 import { useState } from "react"
-import { OptionField } from "./StoryType"
-import { UserSelectionHandler } from "./types"
+import { OptionField, UserSelectionHandler } from "./types"
 
 const OptionList = [
   {

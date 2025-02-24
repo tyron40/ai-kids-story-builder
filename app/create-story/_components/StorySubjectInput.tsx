@@ -1,5 +1,5 @@
 import { Textarea } from "@nextui-org/input"
-import { UserSelectionHandler } from "../page"
+import { UserSelectionHandler } from "./types"
 
 export default function StorySubjectInput({
   userSelection,
