@@ -1,14 +1,15 @@
-import { ForwardedRef, forwardRef } from "react"
-import { PDFDownloadLink } from "@react-pdf/renderer"
-import StoryPDF from "./StoryPDF"
 import { StoryItem } from "@/app/_utils/db"
+import { PDFDownloadLink } from "@react-pdf/renderer"
+import { ForwardedRef, forwardRef } from "react"
 
-interface LastPageProps {
+import StoryPDF from "./StoryPDF"
+
+interface StoryLastPageProps {
   story: StoryItem
 }
 
-const LastPage = forwardRef(
-  (props: LastPageProps, ref: ForwardedRef<HTMLDivElement>) => {
+const StoryLastPage = forwardRef(
+  (props: StoryLastPageProps, ref: ForwardedRef<HTMLDivElement>) => {
     return (
       <div className="bg-primary p-10 h-full" ref={ref}>
         <h2 className="text-center text-2xl text-white">End</h2>
@@ -26,6 +27,6 @@ const LastPage = forwardRef(
   }
 )
 
-LastPage.displayName = "LastPage"
+StoryLastPage.displayName = "StoryLastPage"
 
-export default LastPage
+export default StoryLastPage

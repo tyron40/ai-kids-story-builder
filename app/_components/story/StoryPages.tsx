@@ -10,7 +10,7 @@ interface StoryPagesProps {
   storyId: number
   chapter: Chapter
   chapterNumber: number
-  regenerateImage: ((chapter: Chapter) => Promise<void>) | null
+  regenerateImage?: ((chapter: Chapter) => Promise<void>) | null
 }
 
 const StoryPages = forwardRef(
@@ -83,7 +83,7 @@ const StoryPages = forwardRef(
             Your browser does not support the audio element.
           </audio>
         )}
-        <p className="text-lg p-10 mt-3 rounded-lg bg-slate-100 line-clamp-[10]">
+        <p className="text-lg p-6 mt-3 rounded-lg bg-slate-100">
           {chapter.chapter_text}
         </p>
         {regenerateImage && (

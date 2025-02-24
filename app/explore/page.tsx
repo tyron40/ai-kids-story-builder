@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import StoryItemCard from "../dashboard/_components/StoryItemCard"
 import { Button } from "@nextui-org/button"
-import CustomLoader from "../create-story/_components/CustomLoader"
+import CustomLoader from "../_components/CustomLoader"
 import { getStories, StoryItem } from "../_utils/db"
 
 const TOTAL_PER_PAGE = 8
@@ -21,7 +21,7 @@ export default function ExploreMore() {
         if (!ignore) {
           setStoryList(result)
           setOffset(offset + TOTAL_PER_PAGE)
-          setHasMore(result.length > 0)
+          setHasMore(result.length === TOTAL_PER_PAGE)
         }
       })
       .finally(() => setLoading(false))
@@ -62,10 +62,10 @@ export default function ExploreMore() {
         </div>
       ) : (
         <div className="flex justify-center items-center mt-6">
-          <p className="text-xl">No stories available.</p>
+          {!loading && <p className="text-xl">No stories available.</p>}
         </div>
       )}
-      {hasMore && (
+      {hasMore && !loading && (
         <div className="text-center mt-10">
           <Button className="" color="primary" onPress={loadMore}>
             Load More

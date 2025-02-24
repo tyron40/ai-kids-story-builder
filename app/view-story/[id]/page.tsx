@@ -1,21 +1,18 @@
 "use client"
-import { generateImage, saveImage } from "@/app/_utils/api"
+import CustomLoader from "@/app/_components/CustomLoader"
+import LinkButton from "@/app/_components/LinkButton"
+import StoryPages from "@/app/_components/story/StoryPages"
+import StoryCoverPage from "@/app/_components/story/StoryCoverPage"
+import StoryLastPage from "@/app/_components/story/StoryLastPage"
+import { getStory, StoryItem } from "@/app/_utils/db"
+import { useUser } from "@clerk/nextjs"
 import { Image } from "@nextui-org/react"
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import {
   IoIosArrowDroprightCircle,
   IoIosArrowDropleftCircle,
 } from "react-icons/io"
 import HTMLFlipBook from "react-pageflip"
-
-import BookCoverPage from "../_components/BookCoverPage"
-import StoryPages from "../_components/StoryPages"
-import LastPage from "../_components/LastPage"
-import { toBase64, urlToFile } from "@/app/_utils/imageUtils"
-import { useUser } from "@clerk/nextjs"
-import { getStory, StoryItem, updateStory } from "@/app/_utils/db"
-import { Chapter } from "@/config/schema"
-import CustomLoader from "@/app/create-story/_components/CustomLoader"
 
 interface PageFlipRef {
   pageFlip: () => {
@@ -36,7 +33,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
   const bookRef = useRef<PageFlipRef>(null)
   const [count, setCount] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const initStory = async () => {
     try {
@@ -54,44 +51,12 @@ export default function ViewStory({ params }: { params: PageParams }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const regenerateImage = useCallback(
-    async (chapter: Chapter) => {
-      if (!story) {
-        return
-      }
-
-      const chapterIndex = story.output.chapters.findIndex(
-        (x) => x.chapter_title === chapter.chapter_title
-      )
-
-      const imageFile = await urlToFile(story.coverImage)
-      const image = await toBase64(imageFile)
-
-      const imageUrl = await generateImage(
-        chapter.image_prompt,
-        image as string
-      )
-
-      const savedImageUrl = await saveImage(imageUrl)
-
-      story.output.chapters[chapterIndex].chapter_image = savedImageUrl
-
-      setStory({
-        ...story,
-      })
-
-      await updateStory(story.id, story.output)
-    },
-    [story]
-  )
-
   const storyPages = useMemo(() => {
     if (!story) {
       return []
     }
 
     const totalChapters = story.output.chapters.length
-    const userEmail = user?.primaryEmailAddress?.emailAddress
 
     let pages: (React.JSX.Element | React.JSX.Element[])[] = []
 
@@ -113,11 +78,6 @@ export default function ViewStory({ params }: { params: PageParams }) {
               storyId={story.id}
               chapter={story.output.chapters[index]}
               chapterNumber={index}
-              regenerateImage={
-                userEmail && story?.userEmail === userEmail && story
-                  ? regenerateImage
-                  : null
-              }
             />
           </div>
         )
@@ -127,7 +87,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
     }
 
     return pages.flat()
-  }, [regenerateImage, story, user?.primaryEmailAddress?.emailAddress])
+  }, [story])
 
   const bookPages = useMemo(() => {
     if (!story) {
@@ -139,11 +99,11 @@ export default function ViewStory({ params }: { params: PageParams }) {
     if (totalChapters > 0) {
       return [
         <div key={0}>
-          <BookCoverPage imageUrl={story?.coverImage} />
+          <StoryCoverPage imageUrl={story?.coverImage} />
         </div>,
         ...storyPages,
         <div key={totalChapters + 1}>
-          <LastPage story={story} />
+          <StoryLastPage story={story} />
         </div>,
       ]
     }
@@ -164,13 +124,17 @@ export default function ViewStory({ params }: { params: PageParams }) {
   }
 
   const title = story?.output.story_cover.title ?? ""
+  const isCurrentUserStory =
+    story && user?.primaryEmailAddress?.emailAddress === story?.userEmail
 
   return (
-    <div className="p-10 md:px-20 lg:px-40 flex flex-col min-h-screen">
-      <h2 className="font-bold text-4xl text-center p-10 bg-primary text-white">
-        {title}
-      </h2>
-      <div className="relative flex justify-center h-[500px] mt-10">
+    <div className="flex flex-col items-center min-h-screen p-10 md:px-20 lg:px-40 gap-12">
+      {!loading && (
+        <h2 className="w-full bg-primary p-10 text-4xl text-white font-bold text-center">
+          {title}
+        </h2>
+      )}
+      <div className="w-full relative flex justify-center h-[500px]">
         {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
         {/* @ts-ignore */}
         <HTMLFlipBook
@@ -210,6 +174,9 @@ export default function ViewStory({ params }: { params: PageParams }) {
           </button>
         )}
       </div>
+      {isCurrentUserStory && !loading && (
+        <LinkButton href={`/edit-story/${story.storyId}`} text="Edit Story" />
+      )}
       <CustomLoader isLoading={loading} />
     </div>
   )

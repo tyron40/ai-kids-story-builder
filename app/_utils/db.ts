@@ -31,12 +31,16 @@ export async function getStory(id: string) {
   return result
 }
 
-export async function updateStory(id: number, output: GAIStoryData) {
-  const result = db
+export async function updateStory(
+  id: number,
+  updates: {
+    output?: GAIStoryData
+    coverImage?: string
+  }
+) {
+  const result = await db
     .update(StoryData)
-    .set({
-      output,
-    })
+    .set(updates)
     .where(eq(StoryData.id, id))
 
   return result

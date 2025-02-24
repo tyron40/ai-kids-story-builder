@@ -14,7 +14,7 @@ import { UserDetailContext } from "../_context/UserDetailConext"
 import { generateImage, saveImage } from "../_utils/api"
 import { toBase64 } from "../_utils/imageUtils"
 import AgeGroup from "./_components/AgeGroup"
-import CustomLoader from "./_components/CustomLoader"
+import CustomLoader from "../_components/CustomLoader"
 import ImageInput from "./_components/ImageInput"
 import ImageStyle from "./_components/ImageStyle"
 import StorySubjectInput from "./_components/StorySubjectInput"
@@ -69,9 +69,9 @@ export default function CreateStory() {
       storyType: formData?.storyType,
       output: JSON.parse(output),
       coverImage: imageUrl,
-      userEmail: user!.primaryEmailAddress?.emailAddress ?? "",
-      userImage: user!.imageUrl,
-      userName: user!.fullName,
+      userEmail: user?.primaryEmailAddress?.emailAddress ?? "",
+      userImage: user?.imageUrl ?? null,
+      userName: user?.username ?? null,
     })
   }
 
