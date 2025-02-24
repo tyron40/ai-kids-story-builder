@@ -23,7 +23,7 @@ export default function ImageInput({
     if (file) {
       setImage(URL.createObjectURL(file))
       userSelection({
-        fieldName: "storyImage",
+        fieldName: "seedImage",
         fieldValue: file,
       })
     }
@@ -32,7 +32,7 @@ export default function ImageInput({
   const onPhotoPick = (image: string) => {
     setImage(image)
     userSelection({
-      fieldName: "storyImage",
+      fieldName: "seedImage",
       fieldValue: image,
     })
   }
@@ -40,7 +40,7 @@ export default function ImageInput({
   const onFileRemove = () => {
     setImage(null)
     userSelection({
-      fieldName: "storyImage",
+      fieldName: "seedImage",
       fieldValue: null,
     })
   }

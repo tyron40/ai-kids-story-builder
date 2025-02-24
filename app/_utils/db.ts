@@ -58,7 +58,7 @@ export async function createStory(params: StoryCreateParams) {
   return await db
     .insert(StoryData)
     .values(params)
-    .returning({ storyId: StoryData?.storyId })
+    .returning({ storyId: StoryData.storyId })
 }
 
 export async function getUser(email: string) {

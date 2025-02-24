@@ -34,6 +34,7 @@ export interface GAIStoryData {
     image_prompt: string
   }
   chapters: GAIChapter[]
+  seedImageUrl: string | null
 }
 
 export function isChapter(data: object): data is GAIChapter {

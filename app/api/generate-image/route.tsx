@@ -1,33 +1,43 @@
 import { storage } from "@/config/firebaseConfig"
+import axios from "axios"
 import { getDownloadURL, ref, uploadString } from "firebase/storage"
 import { NextRequest, NextResponse } from "next/server"
 import Replicate from "replicate"
 
+async function convertToBase64(imageUrl: string) {
+  const respose = await axios.get(imageUrl, { responseType: "arraybuffer" })
+  return Buffer.from(respose.data).toString("base64")
+}
+
+async function uploadData(filename: string, data: string) {
+  const fileRef = ref(storage, filename)
+  await uploadString(fileRef, data, "data_url")
+  return await getDownloadURL(fileRef)
+}
+
 export async function POST(req: NextRequest) {
-  const { image, prompt } = await req.json()
+  const { prompt, seedImage } = await req.json()
 
-  let imageUrl: string | null = null
+  let seedImageUrl: string | null = null
 
-  if (image) {
-    const filetype = image.substring(
+  if (seedImage) {
+    const filetype = seedImage.substring(
       "data:image/".length,
-      image.indexOf(";base64")
+      seedImage.indexOf(";base64")
     )
     const filename = "/ai-story/temp/" + Date.now() + `.${filetype}`
-    const imageRef = ref(storage, filename)
-    await uploadString(imageRef, image as string, "data_url")
-    imageUrl = await getDownloadURL(imageRef)
+    seedImageUrl = await uploadData(filename, seedImage as string)
   }
 
   const replicate = new Replicate({
     auth: process.env.REPLICATE_API_KEY,
   })
 
-  const input = image
+  const input = seedImage
     ? {
         prompt: `${prompt} img`,
         num_steps: 50,
-        input_image: imageUrl,
+        input_image: seedImageUrl,
         style_name: "(No style)",
       }
     : {
@@ -37,11 +47,17 @@ export async function POST(req: NextRequest) {
         aspect_ratio: "1:1",
       }
 
-  const model = image
+  const model = seedImage
     ? "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4"
     : "black-forest-labs/flux-schnell"
 
-  const output = await replicate.run(model, { input }) as string[]
+  const [generatedImageUrl] = (await replicate.run(model, {
+    input,
+  })) as string[]
 
-  return NextResponse.json({ imageUrl: output[0] })
+  const base64 =
+    "data:image/png;base64," + (await convertToBase64(generatedImageUrl))
+  const imageUrl = await uploadData("/ai-story/" + Date.now() + ".png", base64)
+
+  return NextResponse.json({ imageUrl, seedImageUrl })
 }

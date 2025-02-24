@@ -15,3 +15,16 @@ export function toBase64(file: File) {
     reader.onerror = reject
   })
 }
+
+export async function urlToBase64(url: string) {
+  const file = await urlToFile(url)
+  return toBase64(file)
+}
+
+export async function getImageData(image: File | string) {
+  if (typeof image === "object") {
+    return (await toBase64(image)) as string
+  }
+
+  return image
+}

@@ -3,9 +3,9 @@ import CustomLoader from "@/app/_components/CustomLoader"
 import StoryPages from "@/app/_components/story/StoryPages"
 import StoryCoverPage from "@/app/_components/story/StoryCoverPage"
 import StoryLastPage from "@/app/_components/story/StoryLastPage"
-import { generateImage, saveImage } from "@/app/_utils/api"
+import { generateImage } from "@/app/_utils/api"
 import { getStory, StoryItem, updateStory } from "@/app/_utils/db"
-import { toBase64, urlToFile } from "@/app/_utils/imageUtils"
+import { urlToBase64 } from "@/app/_utils/imageUtils"
 import { Chapter } from "@/config/schema"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import StoryImage from "./_components/StoryImage"
@@ -39,25 +39,26 @@ export default function ViewStory({ params }: { params: PageParams }) {
       return
     }
 
-    const imageFile = await urlToFile(story.coverImage)
-    const image = await toBase64(imageFile)
+    const imageData = await urlToBase64(story.coverImage)
 
     const prompt = getStoryCoverImagePrompt({
       story,
       gaiStory: story.output,
-      seedImage: image as string,
+      seedImage: imageData as string,
     })
 
-    const imageUrl = await generateImage(prompt, image as string)
-    const savedImageUrl = await saveImage(imageUrl)
+    const { imageUrl } = await generateImage({
+      prompt,
+      seedImage: imageData as string,
+    })
 
-    story.coverImage = savedImageUrl
+    story.coverImage = imageUrl
 
     setStory({
       ...story,
     })
 
-    await updateStory(story.id, { coverImage: savedImageUrl })
+    await updateStory(story.id, { coverImage: imageUrl })
   }, [story])
 
   const regenerateChapterImage = useCallback(
@@ -70,17 +71,14 @@ export default function ViewStory({ params }: { params: PageParams }) {
         (x) => x.chapter_title === chapter.chapter_title
       )
 
-      const imageFile = await urlToFile(story.coverImage)
-      const image = await toBase64(imageFile)
+      const imageData = await urlToBase64(story.coverImage)
 
-      const imageUrl = await generateImage(
-        chapter.image_prompt,
-        image as string
-      )
+      const { imageUrl } = await generateImage({
+        prompt: chapter.image_prompt,
+        seedImage: imageData as string,
+      })
 
-      const savedImageUrl = await saveImage(imageUrl)
-
-      story.output.chapters[chapterIndex].chapter_image = savedImageUrl
+      story.output.chapters[chapterIndex].chapter_image = imageUrl
 
       setStory({
         ...story,

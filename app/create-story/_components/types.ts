@@ -5,7 +5,7 @@ export interface FieldData {
 
 export interface FormDataType {
   storySubject: string
-  storyImage: File | string | null
+  seedImage: File | string | null
   storyType: string
   imageStyle: string
   ageGroup: string

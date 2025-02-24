@@ -1,6 +1,6 @@
 "use client"
 import { useUser } from "@clerk/nextjs"
-import { chatSession, isStoryData } from "@/config/GeminiAi"
+import { chatSession, GAIStoryData, isStoryData } from "@/config/GeminiAi"
 import { db } from "@/config/db"
 import { Users } from "@/config/schema"
 import { Button } from "@nextui-org/button"
@@ -11,8 +11,8 @@ import { toast } from "react-toastify"
 import { v4 as uuidv4 } from "uuid"
 
 import { UserDetailContext } from "../_context/UserDetailConext"
-import { generateImage, saveImage } from "../_utils/api"
-import { toBase64 } from "../_utils/imageUtils"
+import { generateImage } from "../_utils/api"
+import { getImageData } from "../_utils/imageUtils"
 import AgeGroup from "./_components/AgeGroup"
 import CustomLoader from "../_components/CustomLoader"
 import ImageInput from "./_components/ImageInput"
@@ -24,21 +24,13 @@ import { getStoryPrompt } from "../_utils/storyUtils"
 import { createStory } from "../_utils/db"
 import { FormDataType, UserSelectionHandler } from "./_components/types"
 
-async function getImageData(storyImage: File | string) {
-  if (typeof storyImage === "object") {
-    return (await toBase64(storyImage)) as string
-  }
-
-  return storyImage
-}
-
 const defaultFormData: FormDataType = {
   storySubject: "",
-  storyImage: null,
   storyType: "",
   imageStyle: "",
   ageGroup: "",
   totalChapters: 5,
+  seedImage: null,
 }
 
 export default function CreateStory() {
@@ -59,7 +51,7 @@ export default function CreateStory() {
     console.log(formData)
   }
 
-  const saveStory = async (output: string, imageUrl: string) => {
+  const saveStory = async (output: GAIStoryData, imageUrl: string) => {
     const recordId = uuidv4()
     return createStory({
       storyId: recordId,
@@ -67,7 +59,7 @@ export default function CreateStory() {
       imageStyle: formData?.imageStyle,
       storySubject: formData?.storySubject,
       storyType: formData?.storyType,
-      output: JSON.parse(output),
+      output,
       coverImage: imageUrl,
       userEmail: user?.primaryEmailAddress?.emailAddress ?? "",
       userImage: user?.imageUrl ?? null,
@@ -83,14 +75,6 @@ export default function CreateStory() {
       })
       .where(eq(Users.userEmail, user?.primaryEmailAddress?.emailAddress ?? ""))
       .returning({ id: Users.id })
-  }
-
-  const onGenerateImage = async (
-    prompt: string,
-    image: string | null
-  ): Promise<string> => {
-    const generatedImageUrl = await generateImage(prompt, image as string)
-    return await saveImage(generatedImageUrl)
   }
 
   const onGenerateStoryData = async () => {
@@ -119,40 +103,46 @@ export default function CreateStory() {
 
       const story = await onGenerateStoryData()
 
-      const image =
-        formData.storyImage !== null
-          ? await getImageData(formData.storyImage)
+      const seedImage =
+        formData.seedImage !== null
+          ? await getImageData(formData.seedImage)
           : null
 
-      const coverImagePrompt = image
+      const coverImagePrompt = seedImage
         ? `${formData?.storySubject ?? ""}, ${formData?.imageStyle}`
         : "Add text with title:" +
           story?.story_cover?.title +
           " in bold text for book cover, " +
           story?.story_cover?.image_prompt
 
-      const coverImageUrl = await onGenerateImage(
-        coverImagePrompt,
-        image as string
-      )
+      const { imageUrl: coverImageUrl, seedImageUrl } = await generateImage({
+        prompt: coverImagePrompt,
+        seedImage,
+      })
 
       // generate chapter images
       for (let index = 0; index < story.chapters.length; index++) {
         const chapter = story.chapters[index]
         if (chapter.image_prompt) {
-          const chapterImageUrl = await onGenerateImage(
-            chapter.image_prompt,
-            image as string
-          )
-          story.chapters[index].chapter_image = chapterImageUrl
+          const { imageUrl } = await generateImage({
+            prompt: chapter.image_prompt,
+            seedImage,
+          })
+          story.chapters[index].chapter_image = imageUrl
         }
       }
 
-      const created = await saveStory(JSON.stringify(story), coverImageUrl)
+      const [created] = await saveStory(
+        {
+          ...story,
+          seedImageUrl,
+        },
+        coverImageUrl
+      )
 
       notify("Story generated")
       await updateUserCredits()
-      router?.replace("/view-story/" + created[0].storyId)
+      router.replace("/view-story/" + created.storyId)
     } catch (e) {
       console.log(e)
       notifyError("Something went wrong, please try again!")
