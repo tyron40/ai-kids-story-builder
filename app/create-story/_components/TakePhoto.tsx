@@ -1,20 +1,20 @@
-import { Button } from "@nextui-org/button";
+import { Button } from "@nextui-org/button"
 import {
   Modal,
   ModalBody,
   ModalContent,
   ModalFooter,
   ModalHeader,
-} from "@nextui-org/modal";
-import { Image } from "@nextui-org/react";
-import { useRef, useState } from "react";
-import { Camera } from "react-camera-pro";
+} from "@nextui-org/modal"
+import { Image } from "@nextui-org/react"
+import { useRef, useState } from "react"
+import { Camera, CameraType } from "react-camera-pro"
 
 interface ITakePhoto {
-  isOpen: boolean;
-  onClose: () => void;
-  onOpenChange: () => void;
-  onPhotoPick: (image: string) => void;
+  isOpen: boolean
+  onClose: () => void
+  onOpenChange: () => void
+  onPhotoPick: (image: string) => void
 }
 
 export default function TakePhoto({
@@ -23,26 +23,26 @@ export default function TakePhoto({
   onOpenChange,
   onPhotoPick,
 }: ITakePhoto) {
-  const camera = useRef(null);
-  const [photo, setPhoto] = useState<string | null>(null);
+  const camera = useRef<CameraType>(null)
+  const [photo, setPhoto] = useState<string | null>(null)
 
   const onTakePhoto = () => {
     if (!camera.current) {
-      return;
+      return
     }
 
-    const photo = camera.current.takePhoto();
-    setPhoto(photo);
-  };
+    const photo = camera.current.takePhoto("base64url")
+    setPhoto(photo as string)
+  }
 
   const onRetakePhoto = () => {
-    setPhoto(null);
-  };
+    setPhoto(null)
+  }
 
   const onPickPhoto = () => {
-    onPhotoPick(photo!);
-    onClose();
-  };
+    onPhotoPick(photo!)
+    onClose()
+  }
 
   return (
     <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="4xl">
@@ -64,23 +64,31 @@ export default function TakePhoto({
                 facingMode="environment"
               />
             ) : (
-              <img src={photo} width="100%" />
+              <Image src={photo} width="100%" alt="" />
             )}
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button onPress={onClose} color="danger">
+          <Button color="danger" onPress={onClose}>
             Cancel
           </Button>
-          {!photo && <Button onPress={onTakePhoto}>Take photo</Button>}
-          {photo && <Button onPress={onRetakePhoto}>Retake photo</Button>}
+          {!photo && (
+            <Button color="primary" onPress={onTakePhoto}>
+              Take photo
+            </Button>
+          )}
           {photo && (
-            <Button onPress={onPickPhoto} color="primary">
+            <Button color="primary" onPress={onRetakePhoto}>
+              Retake photo
+            </Button>
+          )}
+          {photo && (
+            <Button color="primary" onPress={onPickPhoto}>
               Pick photo
             </Button>
           )}
         </ModalFooter>
       </ModalContent>
     </Modal>
-  );
+  )
 }

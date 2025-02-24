@@ -1,67 +1,75 @@
-import { Input } from "@nextui-org/input";
-import { Button, Image, useDisclosure } from "@nextui-org/react";
-import React from "react";
-import TakePhoto from "./TakePhoto";
+import { Input } from "@nextui-org/input"
+import { Button, Image, useDisclosure } from "@nextui-org/react"
+import { ChangeEventHandler, useState } from "react"
+import TakePhoto from "./TakePhoto"
+import { UserSelectionHandler } from "./types"
 
-function ImageInput({ userSelection }: any) {
-  const [image, setImage] = React.useState<string | null>(null);
+export default function ImageInput({
+  userSelection,
+}: {
+  userSelection: UserSelectionHandler
+}) {
+  const [image, setImage] = useState<string | null>(null)
   const {
     isOpen: isTakePhotoOpen,
     onOpen: onTakePhotoOpen,
     onClose: onTakePhotoClose,
-    onOpenChange: onTakePhotoOpenChange
+    onOpenChange: onTakePhotoOpenChange,
   } = useDisclosure()
 
-  const onFilePick: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    const file = e.target.files?.[0];
+  const onFilePick: ChangeEventHandler<HTMLInputElement> = (e) => {
+    const file = e.target.files?.[0]
 
     if (file) {
-      setImage(URL.createObjectURL(file));
+      setImage(URL.createObjectURL(file))
       userSelection({
-        fieldName: "storyImage",
+        fieldName: "seedImage",
         fieldValue: file,
-      });
+      })
     }
-  };
+  }
 
   const onPhotoPick = (image: string) => {
     setImage(image)
     userSelection({
-      fieldName: "storyImage",
+      fieldName: "seedImage",
       fieldValue: image,
-    });
+    })
   }
 
   const onFileRemove = () => {
-    setImage(null);
+    setImage(null)
     userSelection({
-      fieldName: "storyImage",
+      fieldName: "seedImage",
       fieldValue: null,
-    });
-  };
+    })
+  }
 
   return (
     <div>
-      <label htmlFor="story-image" className="font-bold text-4xl text-primary">
+      <label
+        htmlFor="story-image-input"
+        className="font-bold text-4xl text-primary"
+      >
         Your image (optional)
       </label>
-      <div className="flex flex-col justify-between mt-3 gap-3">
+      <div className="flex flex-col justify-between items-center mt-3 gap-3">
         <Input
-          id="story-image"
+          id="story-image-input"
           type="file"
           accept="image/*"
           size="md"
           className="max-w-md"
           onChange={onFilePick}
         />
-        <Button onPress={onTakePhotoOpen}>
+        <Button color="primary" onPress={onTakePhotoOpen} className="w-full">
           Take Photo
         </Button>
         {image && (
           <div className="relative flex justify-center items-center gap-2 max-h-[180px]">
-            <Image src={image} className="max-h-[180px]"/>
+            <Image src={image} className="max-h-[180px]" alt="" />
             <Button
-              color="primary"
+              color="danger"
               onPress={onFileRemove}
               className="absolute top-0 right-0 z-10"
             >
@@ -77,7 +85,5 @@ function ImageInput({ userSelection }: any) {
         onPhotoPick={onPhotoPick}
       />
     </div>
-  );
+  )
 }
-
-export default ImageInput;
