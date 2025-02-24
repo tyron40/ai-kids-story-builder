@@ -48,7 +48,6 @@ export default function CreateStory() {
       ...prev,
       [data.fieldName]: data.fieldValue,
     }))
-    console.log(formData)
   }
 
   const saveStory = async (output: GAIStoryData, imageUrl: string) => {
@@ -126,7 +125,7 @@ export default function CreateStory() {
         if (chapter.image_prompt) {
           const { imageUrl } = await generateImage({
             prompt: chapter.image_prompt,
-            seedImage,
+            seedImage: seedImageUrl,
           })
           story.chapters[index].chapter_image = imageUrl
         }
@@ -144,7 +143,7 @@ export default function CreateStory() {
       await updateUserCredits()
       router.replace("/view-story/" + created.storyId)
     } catch (e) {
-      console.log(e)
+      console.error(e)
       notifyError("Something went wrong, please try again!")
     } finally {
       setLoading(false)

@@ -15,19 +15,31 @@ async function uploadData(filename: string, data: string) {
   return await getDownloadURL(fileRef)
 }
 
-export async function POST(req: NextRequest) {
-  const { prompt, seedImage } = await req.json()
-
+async function getSeedImageUrl(seedImage: string) {
   let seedImageUrl: string | null = null
 
-  if (seedImage) {
+  const isSeedImageUrl = seedImage.startsWith("https://")
+  if (seedImage && isSeedImageUrl) {
+    seedImageUrl = seedImage
+  }
+
+  const isBase64 = seedImage.startsWith("data")
+  if (seedImage && isBase64) {
     const filetype = seedImage.substring(
       "data:image/".length,
       seedImage.indexOf(";base64")
     )
     const filename = "/ai-story/temp/" + Date.now() + `.${filetype}`
-    seedImageUrl = await uploadData(filename, seedImage as string)
+    seedImageUrl = await uploadData(filename, seedImage)
   }
+
+  return seedImageUrl
+}
+
+export async function POST(req: NextRequest) {
+  const { prompt, seedImage } = await req.json()
+
+  const seedImageUrl = await getSeedImageUrl(seedImage)
 
   const replicate = new Replicate({
     auth: process.env.REPLICATE_API_KEY,
