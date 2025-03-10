@@ -32,10 +32,26 @@ export function getStoryCoverImagePrompt({
   gaiStory,
   seedImage,
 }: StoryCoverImagePromptParams) {
-  return seedImage
-    ? `${story.storySubject ?? ""}, ${story.imageStyle}`
-    : "Add text with title:" +
-        gaiStory.story_cover.title +
-        " in bold text for book cover, " +
-        gaiStory.story_cover.image_prompt
+  let prompt = getBasePrompt(
+    gaiStory.story_cover.title,
+    gaiStory.story_cover.image_prompt
+  )
+
+  if (seedImage) {
+    prompt = `${story.storySubject ?? ""}, ${story.imageStyle}`
+  }
+
+  if (story.skinColor) {
+    prompt += ` , ${getSkinColorPrompt(story.skinColor)}`
+  }
+
+  return prompt
+}
+
+export function getBasePrompt(title: string, imagePrompt: string) {
+  return `Add text with title: ${title} in bold text for book cover, ${imagePrompt}`
+}
+
+export function getSkinColorPrompt(skinColor: string | null) {
+  return skinColor ? `character with ${skinColor} skin color` : ""
 }

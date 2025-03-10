@@ -1,16 +1,20 @@
 import useRegenerateImage from "@/app/_components/story/useRegenerateImage"
 import { Chapter } from "@/config/schema"
 import { Button } from "@nextui-org/button"
-import Image from "next/image"
+import { Image } from "@nextui-org/react"
 
 interface StoryImageProps {
   chapter: Chapter
   regenerateImage?: (chapter: Chapter) => Promise<void>
+  width?: number
+  height?: number
 }
 
 export default function StoryImage({
   chapter,
   regenerateImage,
+  width = 500,
+  height = 500,
 }: StoryImageProps) {
   const { onRegenerateImage, isLoading } = useRegenerateImage({
     regenerateImage: regenerateImage
@@ -22,8 +26,8 @@ export default function StoryImage({
     <>
       <Image
         src={chapter.chapter_image}
-        width={500}
-        height={500}
+        width={width}
+        height={height}
         alt={chapter.image_prompt}
       />
       {onRegenerateImage && (

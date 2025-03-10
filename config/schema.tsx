@@ -17,6 +17,7 @@ export const StoryData = pgTable("storyData", {
   storyType: varchar("storyType"),
   ageGroup: varchar("ageGroup"),
   imageStyle: varchar("imageStyle"),
+  skinColor: varchar("skinColor"),
   output: json("output").$type<GAIStoryData>().notNull(),
   coverImage: varchar("coverImage").notNull(),
   userEmail: varchar("userEmail"),

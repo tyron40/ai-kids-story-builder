@@ -36,6 +36,7 @@ export async function updateStory(
   updates: {
     output?: GAIStoryData
     coverImage?: string
+    skinColor?: string
   }
 ) {
   const result = await db

@@ -3,6 +3,7 @@ import axios, { AxiosResponse } from "axios"
 interface GenerateImageRequest {
   prompt: string
   seedImage: string | null
+  skinColor?: string | null
 }
 
 interface GenerateImageResponse {

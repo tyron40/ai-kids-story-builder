@@ -1,6 +1,9 @@
+import {
+  UserSelectionHandler,
+  OptionField,
+} from "@/app/_components/story/controls/types"
 import Image from "next/image"
 import { useState } from "react"
-import { OptionField, UserSelectionHandler } from "./types"
 
 const OptionList = [
   {
@@ -42,7 +45,7 @@ export default function ImageStyle({
 
   return (
     <div>
-      <label className="font-bold text-4xl text-primary">4. Image Style</label>
+      <label className="font-bold text-4xl text-primary">5. Image Style</label>
       <div className="grid grid-cols-3 gap-5 mt-3">
         {OptionList.map((item) => (
           <button

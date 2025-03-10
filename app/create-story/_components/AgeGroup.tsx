@@ -1,6 +1,9 @@
+import {
+  OptionField,
+  UserSelectionHandler,
+} from "@/app/_components/story/controls/types"
 import Image from "next/image"
 import { useState } from "react"
-import { OptionField, UserSelectionHandler } from "./types"
 
 const OptionList = [
   {
@@ -37,7 +40,7 @@ export default function AgeGroup({
 
   return (
     <div>
-      <label className="font-bold text-4xl text-primary">3. Age Group</label>
+      <label className="font-bold text-4xl text-primary">4. Age Group</label>
       <div className="grid grid-cols-3 gap-5 mt-3">
         {OptionList.map((item, index) => (
           <button
