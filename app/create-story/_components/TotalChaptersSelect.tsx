@@ -1,6 +1,6 @@
+import { UserSelectionHandler } from "@/app/_components/story/controls/types"
 import { Select, SelectItem } from "@nextui-org/select"
 import { ChangeEventHandler, useState } from "react"
-import { UserSelectionHandler } from "./types"
 
 const range = Array.from({ length: 10 }, (_, i) => i + 1)
 

@@ -1,6 +1,6 @@
 import { StoryItem } from "@/app/_utils/db"
 import ImageInput from "@/app/create-story/_components/ImageInput"
-import { FieldData } from "@/app/create-story/_components/types"
+import { FieldData } from "@/app/_components/story/controls/types"
 import { Button } from "@nextui-org/button"
 import { Image } from "@nextui-org/react"
 import { useState } from "react"

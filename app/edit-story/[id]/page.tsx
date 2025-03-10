@@ -1,7 +1,9 @@
 "use client"
 import CustomLoader from "@/app/_components/CustomLoader"
-import StoryPages from "@/app/_components/story/StoryPages"
 import StoryLastPage from "@/app/_components/story/StoryLastPage"
+import StoryPages from "@/app/_components/story/StoryPages"
+import SkinColor from "@/app/_components/story/controls/SkinColor"
+import { FieldData } from "@/app/_components/story/controls/types"
 import { generateImage } from "@/app/_utils/api"
 import { getStory, StoryItem, updateStory } from "@/app/_utils/db"
 import { getImageData } from "@/app/_utils/imageUtils"
@@ -10,11 +12,10 @@ import { Chapter } from "@/config/schema"
 import { Divider } from "@nextui-org/react"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "react-toastify"
-import ImageEditorControl from "./_components/ImageEditorControl"
+
 import ChapterEditor from "./_components/ChapterEditor"
 import CoverImageEditor from "./_components/CoverImageEditor"
-import SkinColor from "@/app/create-story/_components/SkinColor"
-import { FieldData } from "@/app/create-story/_components/types"
+import ImageEditorControl from "./_components/ImageEditorControl"
 
 interface PageParams {
   id: string

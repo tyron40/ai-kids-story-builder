@@ -1,11 +1,11 @@
-import SkinColor from "@/app/create-story/_components/SkinColor"
+import SkinColor from "@/app/_components/story/controls/SkinColor"
 import { GAIChapter } from "@/config/GeminiAi"
 import ImageEditorControl from "./ImageEditorControl"
 import StoryImage from "./StoryImage"
 import { StoryItem } from "@/app/_utils/db"
 import { Chapter } from "@/config/schema"
 import { useCallback, useState } from "react"
-import { FieldData } from "@/app/create-story/_components/types"
+import { FieldData } from "@/app/_components/story/controls/types"
 
 interface ChapterEditorProps {
   story: StoryItem

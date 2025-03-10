@@ -1,4 +1,8 @@
 "use client"
+import {
+  FormDataType,
+  UserSelectionHandler,
+} from "@/app/_components/story/controls/types"
 import { useUser } from "@clerk/nextjs"
 import { chatSession, GAIStoryData, isStoryData } from "@/config/GeminiAi"
 import { db } from "@/config/db"
@@ -10,24 +14,23 @@ import { useContext, useState } from "react"
 import { toast } from "react-toastify"
 import { v4 as uuidv4 } from "uuid"
 
+import CustomLoader from "../_components/CustomLoader"
+import SkinColor from "../_components/story/controls/SkinColor"
 import { UserDetailContext } from "../_context/UserDetailConext"
 import { generateImage } from "../_utils/api"
+import { createStory } from "../_utils/db"
 import { getImageData } from "../_utils/imageUtils"
-import AgeGroup from "./_components/AgeGroup"
-import CustomLoader from "../_components/CustomLoader"
-import ImageInput from "./_components/ImageInput"
-import ImageStyle from "./_components/ImageStyle"
-import SkinColor from "./_components/SkinColor"
-import StorySubjectInput from "./_components/StorySubjectInput"
-import StoryType from "./_components/StoryType"
-import TotalChaptersSelect from "./_components/TotalChaptersSelect"
 import {
   getBasePrompt,
   getSkinColorPrompt,
   getStoryPrompt,
 } from "../_utils/storyUtils"
-import { createStory } from "../_utils/db"
-import { FormDataType, UserSelectionHandler } from "./_components/types"
+import AgeGroup from "./_components/AgeGroup"
+import ImageInput from "./_components/ImageInput"
+import ImageStyle from "./_components/ImageStyle"
+import StorySubjectInput from "./_components/StorySubjectInput"
+import StoryType from "./_components/StoryType"
+import TotalChaptersSelect from "./_components/TotalChaptersSelect"
 
 const defaultFormData: FormDataType = {
   storySubject: "",

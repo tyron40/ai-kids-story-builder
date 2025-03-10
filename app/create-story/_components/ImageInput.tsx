@@ -1,8 +1,9 @@
+import { UserSelectionHandler } from "@/app/_components/story/controls/types"
 import { Input } from "@nextui-org/input"
 import { Button, Image, useDisclosure } from "@nextui-org/react"
 import { ChangeEventHandler, useState } from "react"
+
 import TakePhoto from "./TakePhoto"
-import { UserSelectionHandler } from "./types"
 
 export default function ImageInput({
   userSelection,

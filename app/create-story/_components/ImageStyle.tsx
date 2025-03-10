@@ -1,6 +1,9 @@
+import {
+  UserSelectionHandler,
+  OptionField,
+} from "@/app/_components/story/controls/types"
 import Image from "next/image"
 import { useState } from "react"
-import { OptionField, UserSelectionHandler } from "./types"
 
 const OptionList = [
   {
