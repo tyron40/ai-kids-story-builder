@@ -18,12 +18,12 @@ async function uploadData(filename: string, data: string) {
 async function getSeedImageUrl(seedImage: string) {
   let seedImageUrl: string | null = null
 
-  const isSeedImageUrl = seedImage.startsWith("https://")
+  const isSeedImageUrl = seedImage?.startsWith("https://")
   if (seedImage && isSeedImageUrl) {
     seedImageUrl = seedImage
   }
 
-  const isBase64 = seedImage.startsWith("data")
+  const isBase64 = seedImage?.startsWith("data")
   if (seedImage && isBase64) {
     const filetype = seedImage.substring(
       "data:image/".length,
@@ -37,7 +37,7 @@ async function getSeedImageUrl(seedImage: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const { prompt, seedImage } = await req.json()
+  const { prompt, seedImage, skinColor } = await req.json()
 
   const seedImageUrl = await getSeedImageUrl(seedImage)
 
@@ -45,15 +45,20 @@ export async function POST(req: NextRequest) {
     auth: process.env.REPLICATE_API_KEY,
   })
 
+  const skinColorPrompt = skinColor
+    ? `character with ${skinColor} skin color`
+    : ""
+  const imagePrompt = `${prompt} ${skinColorPrompt}`
+
   const input = seedImage
     ? {
-        prompt: `${prompt} img`,
+        prompt: `${imagePrompt} img`,
         num_steps: 50,
         input_image: seedImageUrl,
         style_name: "(No style)",
       }
     : {
-        prompt: prompt,
+        prompt: imagePrompt,
         output_format: "png",
         output_quality: 80,
         aspect_ratio: "1:1",

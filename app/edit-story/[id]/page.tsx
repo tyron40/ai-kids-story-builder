@@ -1,7 +1,6 @@
 "use client"
 import CustomLoader from "@/app/_components/CustomLoader"
 import StoryPages from "@/app/_components/story/StoryPages"
-import StoryCoverPage from "@/app/_components/story/StoryCoverPage"
 import StoryLastPage from "@/app/_components/story/StoryLastPage"
 import { generateImage } from "@/app/_utils/api"
 import { getStory, StoryItem, updateStory } from "@/app/_utils/db"
@@ -12,7 +11,10 @@ import { Divider } from "@nextui-org/react"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "react-toastify"
 import ImageEditorControl from "./_components/ImageEditorControl"
-import StoryImage from "./_components/StoryImage"
+import ChapterEditor from "./_components/ChapterEditor"
+import CoverImageEditor from "./_components/CoverImageEditor"
+import SkinColor from "@/app/create-story/_components/SkinColor"
+import { FieldData } from "@/app/create-story/_components/types"
 
 interface PageParams {
   id: string
@@ -20,6 +22,9 @@ interface PageParams {
 
 export default function ViewStory({ params }: { params: PageParams }) {
   const [story, setStory] = useState<StoryItem | null>(null)
+
+  const [skinColor, setSkinColor] = useState<string | undefined>()
+
   const [loading, setLoading] = useState(true)
   const notify = (msg: string) => toast(msg)
   const notifyError = (msg: string) => toast.error(msg)
@@ -39,8 +44,12 @@ export default function ViewStory({ params }: { params: PageParams }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const onSkinColorChange = useCallback((field: FieldData) => {
+    setSkinColor(field.fieldValue as string)
+  }, [])
+
   const regenerateCoverImage = useCallback(
-    async (seedImage?: File | string) => {
+    async (seedImage?: File | string, skinColor?: string) => {
       if (!story) {
         return
       }
@@ -51,7 +60,10 @@ export default function ViewStory({ params }: { params: PageParams }) {
         }
 
         const prompt = getStoryCoverImagePrompt({
-          story,
+          story: {
+            ...story,
+            skinColor: skinColor ?? null,
+          },
           gaiStory: story.output,
           seedImage: story.output.seedImageUrl,
         })
@@ -78,7 +90,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
   )
 
   const regenerateChapterImage = useCallback(
-    async (chapter: Chapter, seedImage?: File | string) => {
+    async (chapter: Chapter, seedImage?: File | string, skinColor?: string) => {
       if (!story) {
         return
       }
@@ -95,6 +107,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
         const { imageUrl } = await generateImage({
           prompt: chapter.image_prompt,
           seedImage: seedImage ?? story.output.seedImageUrl,
+          skinColor,
         })
 
         story.output.chapters[chapterIndex].chapter_image = imageUrl
@@ -128,7 +141,10 @@ export default function ViewStory({ params }: { params: PageParams }) {
         }
 
         const prompt = getStoryCoverImagePrompt({
-          story,
+          story: {
+            ...story,
+            skinColor: skinColor ?? null,
+          },
           gaiStory: story.output,
           seedImage: seedImage ?? story.output.seedImageUrl,
         })
@@ -148,6 +164,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
             const { imageUrl } = await generateImage({
               prompt: chapter.image_prompt,
               seedImage: seedImageUrl,
+              skinColor,
             })
             story.output.chapters[index].chapter_image = imageUrl
           }
@@ -156,6 +173,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
         await updateStory(story.id, {
           output: story.output,
           coverImage: coverImageUrl,
+          skinColor,
         })
 
         setStory({ ...story })
@@ -168,7 +186,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
         setLoading(false)
       }
     },
-    [story]
+    [story, skinColor]
   )
 
   const storyPages = useMemo(() => {
@@ -188,20 +206,18 @@ export default function ViewStory({ params }: { params: PageParams }) {
             key={`chapter-${index + 1}-img`}
             className="flex flex-col gap-2 bg-white p-4 max-w-screen-md"
           >
-            <span className="fs-3">Chapter {index + 1}</span>
-            <div className="flex flex-col lg:flex-row gap-2 items-center">
-              <StoryImage chapter={chapter} width={300} height={300} />
-              <ImageEditorControl
-                story={story}
-                onRegenerate={async (newImage?: File | string) =>
-                  regenerateChapterImage(chapter, newImage)
-                }
-              />
-            </div>
+            <span className="font-bold text-4xl text-primary">
+              Chapter {index + 1}
+            </span>
+            <ChapterEditor
+              story={story}
+              chapter={chapter}
+              regenerateImage={regenerateChapterImage}
+            />
             <Divider />
             <StoryPages
               storyId={story.id}
-              chapter={story.output.chapters[index]}
+              chapter={chapter}
               chapterNumber={index}
             />
           </div>
@@ -225,21 +241,11 @@ export default function ViewStory({ params }: { params: PageParams }) {
           key={0}
           className="flex flex-col gap-2 bg-white p-4 max-w-screen-md"
         >
-          <span className="fs-3">Cover image</span>
-          <div className="flex flex-col lg:flex-row gap-2 items-center">
-            <StoryCoverPage
-              imageUrl={story?.coverImage}
-              width={300}
-              height={300}
-              className="rounded-2xl overflow-hidden"
-            />
-            <ImageEditorControl
-              story={story}
-              onRegenerate={async (newImage?: File | string) =>
-                regenerateCoverImage(newImage)
-              }
-            />
-          </div>
+          <span className="font-bold text-4xl text-primary">Cover image</span>
+          <CoverImageEditor
+            story={story}
+            regenerateImage={regenerateCoverImage}
+          />
         </div>,
         ...storyPages,
         <div key={totalChapters + 1}>
@@ -261,11 +267,24 @@ export default function ViewStory({ params }: { params: PageParams }) {
             {title}
           </h2>
           {story && (
-            <ImageEditorControl
-              story={story}
-              onRegenerate={regenerateAllImages}
-              generateTxt="Regenerate all images"
-            />
+            <div className="flex justify-center">
+              <div className="flex flex-col lg:flex-row gap-2 max-w-screen-lg">
+                <div className="flex flex-col gap-2">
+                  <span className="font-bold text-4xl text-primary">
+                    1. Edit image
+                  </span>
+                  <ImageEditorControl
+                    story={story}
+                    onRegenerate={regenerateAllImages}
+                    generateTxt="Regenerate all images"
+                  />
+                </div>
+                <SkinColor
+                  value={skinColor ?? story.skinColor}
+                  userSelection={onSkinColorChange}
+                />
+              </div>
+            </div>
           )}
           <div className="flex flex-col justify-center items-center gap-4 mt-10">
             {bookPages}

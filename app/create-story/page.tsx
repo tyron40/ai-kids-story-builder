@@ -17,10 +17,15 @@ import AgeGroup from "./_components/AgeGroup"
 import CustomLoader from "../_components/CustomLoader"
 import ImageInput from "./_components/ImageInput"
 import ImageStyle from "./_components/ImageStyle"
+import SkinColor from "./_components/SkinColor"
 import StorySubjectInput from "./_components/StorySubjectInput"
 import StoryType from "./_components/StoryType"
 import TotalChaptersSelect from "./_components/TotalChaptersSelect"
-import { getStoryPrompt } from "../_utils/storyUtils"
+import {
+  getBasePrompt,
+  getSkinColorPrompt,
+  getStoryPrompt,
+} from "../_utils/storyUtils"
 import { createStory } from "../_utils/db"
 import { FormDataType, UserSelectionHandler } from "./_components/types"
 
@@ -29,6 +34,7 @@ const defaultFormData: FormDataType = {
   storyType: "",
   imageStyle: "",
   ageGroup: "",
+  skinColor: null,
   totalChapters: 5,
   seedImage: null,
 }
@@ -54,10 +60,11 @@ export default function CreateStory() {
     const recordId = uuidv4()
     return createStory({
       storyId: recordId,
-      ageGroup: formData?.ageGroup,
-      imageStyle: formData?.imageStyle,
-      storySubject: formData?.storySubject,
-      storyType: formData?.storyType,
+      ageGroup: formData.ageGroup,
+      imageStyle: formData.imageStyle,
+      skinColor: formData.skinColor,
+      storySubject: formData.storySubject,
+      storyType: formData.storyType,
       output,
       coverImage: imageUrl,
       userEmail: user?.primaryEmailAddress?.emailAddress ?? "",
@@ -107,16 +114,26 @@ export default function CreateStory() {
           ? await getImageData(formData.seedImage)
           : null
 
-      const coverImagePrompt = seedImage
-        ? `${formData?.storySubject ?? ""}, ${formData?.imageStyle}`
-        : "Add text with title:" +
-          story?.story_cover?.title +
-          " in bold text for book cover, " +
-          story?.story_cover?.image_prompt
+      const skinColorPrompt = getSkinColorPrompt(formData.skinColor)
+
+      const coverImagePromptParts = seedImage
+        ? [formData.storySubject, formData.imageStyle, skinColorPrompt]
+        : [
+            getBasePrompt(
+              story.story_cover.title,
+              story.story_cover.image_prompt
+            ),
+            skinColorPrompt,
+          ]
+
+      const coverImagePrompt = coverImagePromptParts
+        .filter((x) => !!x)
+        .join(", ")
 
       const { imageUrl: coverImageUrl, seedImageUrl } = await generateImage({
         prompt: coverImagePrompt,
         seedImage,
+        skinColor: formData.skinColor,
       })
 
       // generate chapter images
@@ -124,8 +141,11 @@ export default function CreateStory() {
         const chapter = story.chapters[index]
         if (chapter.image_prompt) {
           const { imageUrl } = await generateImage({
-            prompt: chapter.image_prompt,
+            prompt: [chapter.image_prompt, skinColorPrompt]
+              .filter((x) => !!x)
+              .join(", "),
             seedImage: seedImageUrl,
+            skinColor: formData.skinColor,
           })
           story.chapters[index].chapter_image = imageUrl
         }
@@ -160,11 +180,12 @@ export default function CreateStory() {
         AI bring your imagination to life, one story at a time.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-14">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-14 max-w-screen-2xl justify-self-center">
         <div className="grid grid-cols-2 gap-2">
           <StorySubjectInput userSelection={onHandleUserSelection} />
           <ImageInput userSelection={onHandleUserSelection} />
         </div>
+        <SkinColor userSelection={onHandleUserSelection} />
         <StoryType userSelection={onHandleUserSelection} />
         <AgeGroup userSelection={onHandleUserSelection} />
         <ImageStyle userSelection={onHandleUserSelection} />

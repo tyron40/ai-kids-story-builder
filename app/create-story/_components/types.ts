@@ -9,6 +9,7 @@ export interface FormDataType {
   storyType: string
   imageStyle: string
   ageGroup: string
+  skinColor: string | null
   totalChapters: number
 }
 

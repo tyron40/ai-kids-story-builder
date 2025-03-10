@@ -38,7 +38,7 @@ export default function StoryType({
 
   return (
     <div>
-      <label className="font-bold text-4xl text-primary">2. Story Type</label>
+      <label className="font-bold text-4xl text-primary">3. Story Type</label>
       <div className="grid grid-cols-3 gap-5 mt-3">
         {OptionList.map((item) => (
           <button

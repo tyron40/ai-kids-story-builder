@@ -25,7 +25,7 @@ export default function TotalChaptersSelect({
         className="font-bold text-4xl text-primary"
         htmlFor="total-chapters"
       >
-        5. Total Chapters
+        6. Total Chapters
       </label>
       <Select
         id="total-chapters"
