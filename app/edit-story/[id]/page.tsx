@@ -8,7 +8,6 @@ import { generateImage } from "@/app/_utils/api"
 import { getStory, StoryItem, updateStory } from "@/app/_utils/db"
 import { getImageData } from "@/app/_utils/imageUtils"
 import { getStoryCoverImagePrompt } from "@/app/_utils/storyUtils"
-import { Chapter } from "@/config/schema"
 import { Divider } from "@nextui-org/react"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "react-toastify"
@@ -16,6 +15,10 @@ import { toast } from "react-toastify"
 import ChapterEditor from "./_components/ChapterEditor"
 import CoverImageEditor from "./_components/CoverImageEditor"
 import ImageEditorControl from "./_components/ImageEditorControl"
+import {
+  RegenerateChapterImageParams,
+  RegenerateImageParams,
+} from "./_components/types"
 
 interface PageParams {
   id: string
@@ -50,7 +53,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
   }, [])
 
   const regenerateCoverImage = useCallback(
-    async (seedImage?: File | string, skinColor?: string) => {
+    async ({ seedImage, skinColor, imagePrompt }: RegenerateImageParams) => {
       if (!story) {
         return
       }
@@ -60,18 +63,18 @@ export default function ViewStory({ params }: { params: PageParams }) {
           seedImage = await getImageData(seedImage)
         }
 
-        const prompt = getStoryCoverImagePrompt({
-          story: {
-            ...story,
-            skinColor: skinColor ?? null,
-          },
-          gaiStory: story.output,
-          seedImage: story.output.seedImageUrl,
-        })
+        const prompt =
+          imagePrompt ??
+          getStoryCoverImagePrompt({
+            story,
+            gaiStory: story.output,
+            seedImage: story.output.seedImageUrl,
+          })
 
         const { imageUrl } = await generateImage({
           prompt,
           seedImage: seedImage ?? story.output.seedImageUrl,
+          skinColor,
         })
 
         story.coverImage = imageUrl
@@ -91,7 +94,12 @@ export default function ViewStory({ params }: { params: PageParams }) {
   )
 
   const regenerateChapterImage = useCallback(
-    async (chapter: Chapter, seedImage?: File | string, skinColor?: string) => {
+    async ({
+      chapter,
+      seedImage,
+      skinColor,
+      imagePrompt,
+    }: RegenerateChapterImageParams) => {
       if (!story) {
         return
       }
@@ -105,13 +113,24 @@ export default function ViewStory({ params }: { params: PageParams }) {
           seedImage = await getImageData(seedImage)
         }
 
+        const prompt = imagePrompt ?? chapter.image_prompt
+        skinColor =
+          skinColor ??
+          story.output.chapters[chapterIndex].skin_color ??
+          story.skinColor
+
         const { imageUrl } = await generateImage({
-          prompt: chapter.image_prompt,
+          prompt,
           seedImage: seedImage ?? story.output.seedImageUrl,
           skinColor,
         })
 
-        story.output.chapters[chapterIndex].chapter_image = imageUrl
+        story.output.chapters[chapterIndex] = {
+          ...story.output.chapters[chapterIndex],
+          chapter_image: imageUrl,
+          image_prompt: prompt,
+          skin_color: skinColor,
+        }
 
         setStory({
           ...story,
@@ -142,10 +161,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
         }
 
         const prompt = getStoryCoverImagePrompt({
-          story: {
-            ...story,
-            skinColor: skinColor ?? null,
-          },
+          story,
           gaiStory: story.output,
           seedImage: seedImage ?? story.output.seedImageUrl,
         })
@@ -153,6 +169,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
         const { imageUrl: coverImageUrl, seedImageUrl } = await generateImage({
           prompt,
           seedImage: seedImage ?? story.output.seedImageUrl,
+          skinColor,
         })
 
         story.coverImage = coverImageUrl
@@ -235,6 +252,11 @@ export default function ViewStory({ params }: { params: PageParams }) {
     }
 
     const totalChapters = story.output.chapters.length
+    const prompt = getStoryCoverImagePrompt({
+      story,
+      gaiStory: story.output,
+      seedImage: story.output.seedImageUrl,
+    })
 
     if (totalChapters > 0) {
       return [
@@ -245,6 +267,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
           <span className="font-bold text-4xl text-primary">Cover image</span>
           <CoverImageEditor
             story={story}
+            prompt={prompt}
             regenerateImage={regenerateCoverImage}
           />
         </div>,
@@ -278,6 +301,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
                     story={story}
                     onRegenerate={regenerateAllImages}
                     generateTxt="Regenerate all images"
+                    withAction
                   />
                 </div>
                 <SkinColor

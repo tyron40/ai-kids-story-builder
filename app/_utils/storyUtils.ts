@@ -41,17 +41,9 @@ export function getStoryCoverImagePrompt({
     prompt = `${story.storySubject ?? ""}, ${story.imageStyle}`
   }
 
-  if (story.skinColor) {
-    prompt += ` , ${getSkinColorPrompt(story.skinColor)}`
-  }
-
   return prompt
 }
 
 export function getBasePrompt(title: string, imagePrompt: string) {
   return `Add text with title: ${title} in bold text for book cover, ${imagePrompt}`
-}
-
-export function getSkinColorPrompt(skinColor: string | null) {
-  return skinColor ? `character with ${skinColor} skin color` : ""
 }

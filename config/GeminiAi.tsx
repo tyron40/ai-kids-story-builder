@@ -26,6 +26,7 @@ export interface GAIChapter {
   chapter_text: string
   image_prompt: string
   chapter_image: string
+  skin_color?: string | null
 }
 
 export interface GAIStoryData {

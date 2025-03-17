@@ -9,12 +9,14 @@ interface ImageEditorControlProps {
   story: StoryItem
   onRegenerate: (image?: File | string) => Promise<void>
   generateTxt?: string
+  withAction?: boolean
 }
 
 export default function ImageEditorControl({
   story,
   onRegenerate,
   generateTxt = "Generate new image",
+  withAction,
 }: ImageEditorControlProps) {
   const [imageInput, setImageInput] = useState<string | File | null>(null)
   const [seedData, setSeedData] = useState<string | null>(null)
@@ -60,13 +62,15 @@ export default function ImageEditorControl({
       )}
       <div className="flex flex-col gap-4">
         <ImageInput userSelection={onImageInputChange} />
-        <Button
-          color="primary"
-          onPress={onRegenerateImage}
-          isLoading={isLoading}
-        >
-          {generateTxt}
-        </Button>
+        {withAction && (
+          <Button
+            color="primary"
+            onPress={onRegenerateImage}
+            isLoading={isLoading}
+          >
+            {generateTxt}
+          </Button>
+        )}
       </div>
     </div>
   )
