@@ -252,6 +252,37 @@ export default function ViewStory({ params }: { params: PageParams }) {
     [story, skinColor]
   )
 
+  const saveChapterTextChanges = useCallback(
+    async (chapter: Chapter, text: string) => {
+      if (!story) {
+        return
+      }
+
+      try {
+        const chapterIndex = story.output.chapters.findIndex(
+          (x) => x.chapter_title === chapter.chapter_title
+        )
+
+        story.output.chapters[chapterIndex] = {
+          ...story.output.chapters[chapterIndex],
+          chapter_text: text,
+        }
+
+        setStory({
+          ...story,
+        })
+
+        await updateStory(story.id, { output: story.output })
+
+        notify("Chapter text saved successfully!")
+      } catch (e) {
+        console.error(e)
+        notifyError("Failed to save chapter text, please try again.")
+      }
+    },
+    [story]
+  )
+
   const storyPages = useMemo(() => {
     if (!story) {
       return []
@@ -282,7 +313,9 @@ export default function ViewStory({ params }: { params: PageParams }) {
               storyId={story.id}
               chapter={chapter}
               chapterNumber={index}
-              regenerateText={async () => await regenerateChapterText(chapter)}
+              isEditable
+              regenerateText={regenerateChapterText}
+              saveTextChanges={saveChapterTextChanges}
             />
           </div>
         )
@@ -290,7 +323,12 @@ export default function ViewStory({ params }: { params: PageParams }) {
     }
 
     return pages
-  }, [story, regenerateChapterImage, regenerateChapterText])
+  }, [
+    story,
+    regenerateChapterImage,
+    regenerateChapterText,
+    saveChapterTextChanges,
+  ])
 
   const bookPages = useMemo(() => {
     if (!story) {
