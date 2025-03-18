@@ -20,11 +20,7 @@ import { UserDetailContext } from "../_context/UserDetailConext"
 import { generateImage } from "../_utils/api"
 import { createStory } from "../_utils/db"
 import { getImageData } from "../_utils/imageUtils"
-import {
-  getBasePrompt,
-  getSkinColorPrompt,
-  getStoryPrompt,
-} from "../_utils/storyUtils"
+import { getBasePrompt, getStoryPrompt } from "../_utils/storyUtils"
 import AgeGroup from "./_components/AgeGroup"
 import ImageInput from "./_components/ImageInput"
 import ImageStyle from "./_components/ImageStyle"
@@ -117,16 +113,13 @@ export default function CreateStory() {
           ? await getImageData(formData.seedImage)
           : null
 
-      const skinColorPrompt = getSkinColorPrompt(formData.skinColor)
-
       const coverImagePromptParts = seedImage
-        ? [formData.storySubject, formData.imageStyle, skinColorPrompt]
+        ? [formData.storySubject, formData.imageStyle]
         : [
             getBasePrompt(
               story.story_cover.title,
               story.story_cover.image_prompt
             ),
-            skinColorPrompt,
           ]
 
       const coverImagePrompt = coverImagePromptParts
@@ -144,9 +137,7 @@ export default function CreateStory() {
         const chapter = story.chapters[index]
         if (chapter.image_prompt) {
           const { imageUrl } = await generateImage({
-            prompt: [chapter.image_prompt, skinColorPrompt]
-              .filter((x) => !!x)
-              .join(", "),
+            prompt: chapter.image_prompt,
             seedImage: seedImageUrl,
             skinColor: formData.skinColor,
           })
