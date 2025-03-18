@@ -11,15 +11,17 @@ interface StoryPagesProps {
   chapter: Chapter
   chapterNumber: number
   regenerateImage?: ((chapter: Chapter) => Promise<void>) | null
+  regenerateText?: ((chapter: Chapter) => Promise<void>) | null
 }
 
 const StoryPages = forwardRef(
   (props: StoryPagesProps, ref: ForwardedRef<HTMLDivElement>) => {
-    const { storyId, chapter, chapterNumber, regenerateImage } = props
+    const { storyId, chapter, chapterNumber, regenerateImage, regenerateText } =
+      props
     const [audioUrl, setAudioUrl] = useState<string | null>(null)
     const [isAudioLoading, setIsAudioLoading] = useState(false)
     const audioRef = useRef<HTMLAudioElement>(null)
-    const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
     const notify = (msg: string) => toast(msg)
     const notifyError = (msg: string) => toast.error(msg)
 
@@ -49,19 +51,32 @@ const StoryPages = forwardRef(
     }
 
     const onRegenerateImage = async () => {
-      if (isRegeneratingImage) {
+      if (isLoading || !regenerateImage) {
         return
       }
 
       try {
-        setIsRegeneratingImage(true)
-        await regenerateImage!(chapter)
+        setIsLoading(true)
+        await regenerateImage(chapter)
         notify("Chapter image updated")
       } catch (e) {
         console.error(e)
         notifyError("Something went wrong, please try again.")
       } finally {
-        setIsRegeneratingImage(false)
+        setIsLoading(false)
+      }
+    }
+
+    const onRegenerateText = async () => {
+      if (isLoading || !regenerateText) {
+        return
+      }
+
+      try {
+        setIsLoading(true)
+        await regenerateText(chapter)
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -91,9 +106,19 @@ const StoryPages = forwardRef(
             color="primary"
             className="mt-3"
             onPress={onRegenerateImage}
-            isLoading={isRegeneratingImage}
+            isLoading={isLoading}
           >
             Regenerate image
+          </Button>
+        )}
+        {regenerateText && (
+          <Button
+            color="primary"
+            className="mt-3"
+            onPress={onRegenerateText}
+            isLoading={isLoading}
+          >
+            Regenerate text
           </Button>
         )}
       </div>

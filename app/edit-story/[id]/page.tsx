@@ -8,6 +8,8 @@ import { generateImage } from "@/app/_utils/api"
 import { getStory, StoryItem, updateStory } from "@/app/_utils/db"
 import { getImageData } from "@/app/_utils/imageUtils"
 import { getStoryCoverImagePrompt } from "@/app/_utils/storyUtils"
+import { chapterNewTextPrompt, chapterSession } from "@/config/GeminiAi"
+import { Chapter } from "@/config/schema"
 import { Divider } from "@nextui-org/react"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "react-toastify"
@@ -147,6 +149,49 @@ export default function ViewStory({ params }: { params: PageParams }) {
     [story]
   )
 
+  const regenerateChapterText = useCallback(
+    async (chapter: Chapter) => {
+      if (!story) {
+        return
+      }
+
+      try {
+        const chapterIndex = story.output.chapters.findIndex(
+          (x) => x.chapter_title === chapter.chapter_title
+        )
+
+        const storyParts = story.output.chapters.map((x) => ({
+          title: x.chapter_title,
+          text: x.chapter_text,
+        }))
+
+        const result = await chapterSession.sendMessage(
+          chapterNewTextPrompt(chapterIndex, storyParts)
+        )
+
+        const output = JSON.parse(result.response.text())
+
+        story.output.chapters[chapterIndex] = {
+          ...story.output.chapters[chapterIndex],
+          chapter_title: output.title,
+          chapter_text: output.text,
+        }
+
+        setStory({
+          ...story,
+        })
+
+        await updateStory(story.id, { output: story.output })
+
+        notify("Chapter text regenerated successfully!")
+      } catch (e) {
+        console.error(e)
+        notifyError("Failed to regenerate chapter text, please try again.")
+      }
+    },
+    [story]
+  )
+
   const regenerateAllImages = useCallback(
     async (seedImage?: File | string) => {
       if (!story) {
@@ -237,6 +282,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
               storyId={story.id}
               chapter={chapter}
               chapterNumber={index}
+              regenerateText={async () => await regenerateChapterText(chapter)}
             />
           </div>
         )
@@ -244,7 +290,7 @@ export default function ViewStory({ params }: { params: PageParams }) {
     }
 
     return pages
-  }, [story, regenerateChapterImage])
+  }, [story, regenerateChapterImage, regenerateChapterText])
 
   const bookPages = useMemo(() => {
     if (!story) {

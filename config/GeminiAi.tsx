@@ -87,3 +87,18 @@ export const chatSession = model.startChat({
     },
   ],
 })
+
+export const chapterNewTextPrompt = (
+  index: number,
+  parts: {
+    title: string
+    text: string
+  }[]
+) =>
+  `Create new title and new text for index ${index} of array ${JSON.stringify(
+    parts
+  )}. The new text should not be longer the original. Result should be an object {title, text}.`
+
+export const chapterSession = model.startChat({
+  generationConfig,
+})
